@@ -32,6 +32,15 @@ const KEY_TO_KO = {
 const KO_TO_KEY = {};
 Object.entries(KEY_TO_KO).forEach(([k, v]) => { KO_TO_KEY[v] = k; });
 
+/** Excel 실제 컬럼명이 코드와 다를 때 매핑 (기존 파일 호환) */
+const HEADER_ALIASES = {
+  '신청자이머': '신청자이메일',
+  '신청자 아이디': '신청자이메일',
+  '접수담당지': '접수담당자',
+  '수령확인': '수령확인일시',
+  '최종수정일': '최종수정일시',
+};
+
 function ensureDir(dirPath) {
   return fs.mkdir(dirPath, { recursive: true });
 }
@@ -60,7 +69,8 @@ export async function getRequests(filter = {}) {
   list = list.map((row) => {
     const out = {};
     Object.entries(row).forEach(([k, v]) => {
-      const key = KO_TO_KEY[k] || k;
+      const ko = (typeof k === 'string' && k.trim()) ? (HEADER_ALIASES[k.trim()] || k) : k;
+      const key = KO_TO_KEY[ko] || ko;
       out[key] = v;
     });
     return out;
