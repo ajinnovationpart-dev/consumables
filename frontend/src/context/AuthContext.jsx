@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
     authApi
       .me()
       .then((res) => {
-        if (res.user) setUser(res.user);
+        if (res?.user) setUser(res.user);
       })
       .catch(() => {
         sessionStorage.removeItem('token');
