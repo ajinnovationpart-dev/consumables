@@ -1,21 +1,35 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { copyFileSync } from 'fs';
+import { writeFileSync } from 'fs';
 import { join } from 'path';
 
-// GitHub Pages: 직접 URL 접속/새로고침 시 404 대신 SPA 로드
-function copy404Plugin() {
+const BASE = process.env.VITE_BASE_PATH || '/consumables/';
+
+// GitHub Pages: 404 시 현재 URL 저장 후 base로 이동 → SPA가 저장된 경로로 이동
+function spa404Plugin() {
   return {
-    name: 'copy-404',
+    name: 'spa-404',
     closeBundle() {
       const outDir = join(__dirname, 'dist');
-      copyFileSync(join(outDir, 'index.html'), join(outDir, '404.html'));
+      const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting...</title>
+  <script>
+    sessionStorage.setItem('redirect', location.href);
+    location.replace(location.origin + '${BASE}' + location.hash);
+  </script>
+</head>
+<body>Redirecting...</body>
+</html>`;
+      writeFileSync(join(outDir, '404.html'), html);
     },
   };
 }
 
 export default defineConfig({
-  plugins: [react(), copy404Plugin()],
+  plugins: [react(), spa404Plugin()],
   // GitHub Pages 서브경로 배포 시 (예: user.github.io/repo/)
   base: process.env.VITE_BASE_PATH || '/',
   server: {

@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -18,6 +19,22 @@ function PrivateRoute({ children, adminOnly }) {
 }
 
 export default function App() {
+  const navigate = useNavigate();
+
+  // GitHub Pages: 404에서 base로 리다이렉트된 뒤, 저장된 경로로 이동
+  useEffect(() => {
+    const redirect = sessionStorage.getItem('redirect');
+    if (redirect) {
+      sessionStorage.removeItem('redirect');
+      try {
+        const url = new URL(redirect);
+        const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+        const path = url.pathname.replace(new RegExp(`^${base}`), '') || '/';
+        if (path && path !== '/') navigate(path, { replace: true });
+      } catch (_) {}
+    }
+  }, [navigate]);
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
