@@ -10,7 +10,11 @@ export default function Dashboard() {
   useEffect(() => {
     requests
       .dashboard()
-      .then(setData)
+      .then((res) => {
+        const stats = res?.stats && typeof res.stats === 'object' ? res.stats : {};
+        const recent = Array.isArray(res?.recent) ? res.recent : [];
+        setData({ stats, recent });
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -18,7 +22,8 @@ export default function Dashboard() {
   if (loading) return <p>로딩 중...</p>;
   if (error) return <div className="alert alert-danger">{error}</div>;
 
-  const { stats = {}, recent = [] } = data || {};
+  const stats = data?.stats ?? {};
+  const recent = data?.recent ?? [];
 
   return (
     <>
