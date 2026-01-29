@@ -26,8 +26,8 @@ export default function NewRequest() {
   });
 
   useEffect(() => {
-    codes.regions().then(setRegions).catch(() => {});
-    if (user?.team) codes.deliveryPlaces(user.team).then(setDeliveryPlaces).catch(() => {});
+    codes.regions().then((res) => setRegions(Array.isArray(res) ? res : [])).catch(() => setRegions([]));
+    if (user?.team) codes.deliveryPlaces(user.team).then((res) => setDeliveryPlaces(Array.isArray(res) ? res : [])).catch(() => setDeliveryPlaces([]));
   }, [user?.team]);
 
   const handleChange = (e) => {
@@ -144,7 +144,7 @@ export default function NewRequest() {
               <label className="form-label">지역</label>
               <select name="region" className="form-control" value={form.region} onChange={handleChange}>
                 <option value="">선택</option>
-                {regions.map((r) => (
+                {(Array.isArray(regions) ? regions : []).map((r) => (
                   <option key={r.code} value={r.name}>{r.name}</option>
                 ))}
               </select>
@@ -153,7 +153,7 @@ export default function NewRequest() {
               <label className="form-label">배송지</label>
               <select name="deliveryPlace" className="form-control" value={form.deliveryPlace} onChange={handleChange}>
                 <option value="">선택</option>
-                {deliveryPlaces.map((p) => (
+                {(Array.isArray(deliveryPlaces) ? deliveryPlaces : []).map((p) => (
                   <option key={p.배송지명 || p.name} value={p.배송지명 || p.name}>{p.배송지명 || p.name}</option>
                 ))}
               </select>

@@ -10,7 +10,7 @@ export default function MyRequests() {
   useEffect(() => {
     requests
       .my()
-      .then(setList)
+      .then((res) => setList(Array.isArray(res) ? res : []))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -18,7 +18,7 @@ export default function MyRequests() {
   const handleStatus = async (requestNo, status, remarks = '') => {
     try {
       await requests.updateStatus(requestNo, status, remarks);
-      setList((prev) => prev.map((r) => (r.requestNo === requestNo ? { ...r, status } : r)));
+      setList((prev) => (Array.isArray(prev) ? prev : []).map((r) => (r.requestNo === requestNo ? { ...r, status } : r)));
     } catch (err) {
       alert(err.message);
     }
@@ -31,7 +31,7 @@ export default function MyRequests() {
     <>
       <h1 style={{ marginBottom: 'var(--aj-spacing-lg)' }}>내 신청 목록</h1>
       <div className="card">
-        {list.length ? (
+        {(Array.isArray(list) ? list : []).length ? (
           <table className="table">
             <thead>
               <tr>
@@ -44,7 +44,7 @@ export default function MyRequests() {
               </tr>
             </thead>
             <tbody>
-              {list.map((r) => (
+              {(Array.isArray(list) ? list : []).map((r) => (
                 <tr key={r.requestNo}>
                   <td><Link to={`/request/${r.requestNo}`}>{r.requestNo}</Link></td>
                   <td>{r.requestDate}</td>

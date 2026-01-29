@@ -51,7 +51,7 @@ export default function Dashboard() {
           <span>최근 신청</span>
           <Link to="/new-request" className="btn btn-primary btn-sm">신규 신청</Link>
         </div>
-        {recent?.length ? (
+        {(Array.isArray(recent) ? recent : []).length ? (
           <table className="table">
             <thead>
               <tr>
@@ -63,7 +63,7 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {recent.map((r) => (
+              {(Array.isArray(recent) ? recent : []).map((r) => (
                 <tr key={r.requestNo}>
                   <td>{r.requestNo}</td>
                   <td>{r.itemName}</td>

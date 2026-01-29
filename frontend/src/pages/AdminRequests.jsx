@@ -10,7 +10,7 @@ export default function AdminRequests() {
   useEffect(() => {
     requests
       .all()
-      .then(setList)
+      .then((res) => setList(Array.isArray(res) ? res : []))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -19,7 +19,7 @@ export default function AdminRequests() {
     const rem = status === '접수취소' || status === '처리완료' ? '' : window.prompt('담당자 비고 (선택)');
     try {
       await requests.updateStatus(requestNo, status, rem || '');
-      setList((prev) => prev.map((r) => (r.requestNo === requestNo ? { ...r, status } : r)));
+      setList((prev) => (Array.isArray(prev) ? prev : []).map((r) => (r.requestNo === requestNo ? { ...r, status } : r)));
     } catch (err) {
       alert(err.message);
     }
@@ -32,7 +32,7 @@ export default function AdminRequests() {
     <>
       <h1 style={{ marginBottom: 'var(--aj-spacing-lg)' }}>전체 신청 목록</h1>
       <div className="card">
-        {list.length ? (
+        {(Array.isArray(list) ? list : []).length ? (
           <table className="table">
             <thead>
               <tr>
@@ -46,7 +46,7 @@ export default function AdminRequests() {
               </tr>
             </thead>
             <tbody>
-              {list.map((r) => (
+              {(Array.isArray(list) ? list : []).map((r) => (
                 <tr key={r.requestNo}>
                   <td><Link to={`/request/${r.requestNo}`}>{r.requestNo}</Link></td>
                   <td>{r.requestDate}</td>

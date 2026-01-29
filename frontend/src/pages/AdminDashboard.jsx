@@ -51,7 +51,7 @@ export default function AdminDashboard() {
           <span>최근 신청</span>
           <Link to="/admin/requests" className="btn btn-primary btn-sm">전체 목록</Link>
         </div>
-        {recent?.length ? (
+        {(Array.isArray(recent) ? recent : []).length ? (
           <table className="table">
             <thead>
               <tr>
@@ -64,7 +64,7 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {recent.map((r) => (
+              {(Array.isArray(recent) ? recent : []).map((r) => (
                 <tr key={r.requestNo}>
                   <td>{r.requestNo}</td>
                   <td>{r.requesterName}</td>
