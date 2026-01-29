@@ -18,7 +18,7 @@ export default function Dashboard() {
   if (loading) return <p>로딩 중...</p>;
   if (error) return <div className="alert alert-danger">{error}</div>;
 
-  const { stats, recent } = data;
+  const { stats = {}, recent = [] } = data || {};
 
   return (
     <>
@@ -26,19 +26,19 @@ export default function Dashboard() {
       <div className="d-flex gap-2" style={{ flexWrap: 'wrap', marginBottom: 'var(--aj-spacing-xl)' }}>
         <div className="card" style={{ flex: '1 1 140px' }}>
           <div style={{ fontSize: 'var(--aj-font-size-sm)', color: 'var(--aj-text-secondary)' }}>전체</div>
-          <div style={{ fontSize: 'var(--aj-font-size-2xl)', fontWeight: 'var(--aj-font-weight-bold)' }}>{stats.total || 0}</div>
+          <div style={{ fontSize: 'var(--aj-font-size-2xl)', fontWeight: 'var(--aj-font-weight-bold)' }}>{stats?.total ?? 0}</div>
         </div>
         <div className="card" style={{ flex: '1 1 140px' }}>
           <div style={{ fontSize: 'var(--aj-font-size-sm)', color: 'var(--aj-text-secondary)' }}>접수중</div>
-          <div style={{ fontSize: 'var(--aj-font-size-2xl)', fontWeight: 'var(--aj-font-weight-bold)' }}>{stats.requested || 0}</div>
+          <div style={{ fontSize: 'var(--aj-font-size-2xl)', fontWeight: 'var(--aj-font-weight-bold)' }}>{stats?.requested ?? 0}</div>
         </div>
         <div className="card" style={{ flex: '1 1 140px' }}>
           <div style={{ fontSize: 'var(--aj-font-size-sm)', color: 'var(--aj-text-secondary)' }}>발주진행</div>
-          <div style={{ fontSize: 'var(--aj-font-size-2xl)', fontWeight: 'var(--aj-font-weight-bold)' }}>{stats.ordering || 0}</div>
+          <div style={{ fontSize: 'var(--aj-font-size-2xl)', fontWeight: 'var(--aj-font-weight-bold)' }}>{stats?.ordering ?? 0}</div>
         </div>
         <div className="card" style={{ flex: '1 1 140px' }}>
           <div style={{ fontSize: 'var(--aj-font-size-sm)', color: 'var(--aj-text-secondary)' }}>처리완료</div>
-          <div style={{ fontSize: 'var(--aj-font-size-2xl)', fontWeight: 'var(--aj-font-weight-bold)' }}>{stats.finished || 0}</div>
+          <div style={{ fontSize: 'var(--aj-font-size-2xl)', fontWeight: 'var(--aj-font-weight-bold)' }}>{stats?.finished ?? 0}</div>
         </div>
       </div>
       <div className="card">
