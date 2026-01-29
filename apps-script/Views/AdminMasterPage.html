@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기준정보 관리</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* 관리자 페이지는 PC 전용 스타일 적용 */
+    body {
+      font-size: 14px !important;
+    }
+    
+    .container-fluid {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    /* 모바일 스타일 제거 */
+    @media (max-width: 768px) {
+      body {
+        font-size: 14px !important;
+      }
+      
+      input, .form-control, .form-select, textarea {
+        font-size: 14px !important;
+        min-height: auto !important;
+        padding: 0.375rem 0.75rem !important;
+      }
+      
+      button, .btn {
+        font-size: 14px !important;
+        min-height: auto !important;
+        padding: 0.375rem 0.75rem !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 헤더 -->
+  <nav class="navbar navbar-dark bg-primary mb-3">
+    <div class="container-fluid px-2">
+      <span class="navbar-brand mb-0">⚙️ 기준정보 관리</span>
+      <div class="d-flex align-items-center flex-wrap gap-1">
+        <span class="text-white d-none d-md-inline me-2 small">
+          👤 <span id="headerUserName"></span>
+        </span>
+        <button class="btn btn-sm btn-outline-light" onclick="goBack()">뒤로</button>
+        <button class="btn btn-sm btn-outline-light" onclick="logout()">로그아웃</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid px-2 mt-2">
+    <h2 class="h4 mb-3">📋 기준정보 관리</h2>
+    
+    <!-- 탭 메뉴 -->
+    <ul class="nav nav-tabs mb-4" id="masterTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">
+          👥 사용자 관리
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="delivery-tab" data-bs-toggle="tab" data-bs-target="#delivery" type="button" role="tab">
+          🚚 배송지 관리
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="excel-tab" data-bs-toggle="tab" data-bs-target="#excel" type="button" role="tab">
+          📥 Excel 마스터 파일
+        </button>
+      </li>
+    </ul>
+
+    <!-- 탭 콘텐츠 -->
+    <div class="tab-content" id="masterTabContent">
+      <!-- 사용자 관리 탭 -->
+      <div class="tab-pane fade show active" id="users" role="tabpanel">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">사용자 목록</h5>
+            <button class="btn btn-primary btn-sm" onclick="showUserForm()">
+              ➕ 사용자 등록
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped table-hover">
+                <thead>
+                  <tr>
+                    <th>사용자ID</th>
+                    <th>이름</th>
+                    <th>기사코드</th>
+                    <th>소속팀</th>
+                    <th>지역</th>
+                    <th>역할</th>
+                    <th>활성화</th>
+                    <th>액션</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                  <tr>
+                    <td colspan="8" class="text-center">로딩 중...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 배송지 관리 탭 -->
+      <div class="tab-pane fade" id="delivery" role="tabpanel">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">배송지 목록</h5>
+            <button class="btn btn-primary btn-sm" onclick="showDeliveryForm()">
+              ➕ 배송지 등록
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped table-hover">
+                <thead>
+                  <tr>
+                    <th>배송지명</th>
+                    <th>소속팀</th>
+                    <th>주소</th>
+                    <th>연락처</th>
+                    <th>담당자</th>
+                    <th>활성화</th>
+                    <th>액션</th>
+                  </tr>
+                </thead>
+                <tbody id="deliveryTableBody">
+                  <tr>
+                    <td colspan="7" class="text-center">로딩 중...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Excel 마스터 파일 탭 -->
+      <div class="tab-pane fade" id="excel" role="tabpanel">
+        <div class="row">
+          <!-- CSV 배송지 업로드 -->
+          <div class="col-md-6 mb-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">📤 CSV 배송지 업로드</h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted">
+                  CSV 파일을 업로드하여 배송지 정보를 일괄 등록합니다.<br>
+                  파일 형식: 배송지명,소속팀,주소,연락처,담당자,활성화,비고
+                </p>
+                <div class="mb-3">
+                  <label class="form-label">CSV 파일 선택</label>
+                  <input type="file" class="form-control" id="csvFileInput" accept=".csv" onchange="handleCSVFileSelect(event)">
+                  <div class="form-text">템플릿: templates/배송지관리.csv 참고</div>
+                </div>
+                <button class="btn btn-primary" onclick="uploadCSVFile()" id="uploadCSVBtn" disabled>
+                  📥 CSV 파일 업로드
+                </button>
+                <div id="csvUploadResult" class="mt-3"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Excel 마스터 파일 생성 -->
+          <div class="col-md-6 mb-4">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">📥 Excel 마스터 파일 생성</h5>
+              </div>
+              <div class="card-body">
+                <p class="text-muted">
+                  전체 데이터를 포함한 Excel 마스터 파일을 생성합니다.<br>
+                  기존 파일은 같은 날짜의 파일로 대체됩니다.
+                </p>
+                <button class="btn btn-success" onclick="generateMasterExcel()">
+                  📥 Excel 마스터 파일 생성
+                </button>
+                <div id="excelResult" class="mt-3"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 사용자 등록 모달 -->
+  <div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="userModalTitle">사용자 등록</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="userForm">
+            <div class="mb-3">
+              <label class="form-label">사용자ID <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="userId" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">비밀번호</label>
+              <input type="password" class="form-control" id="userPassword" placeholder="기본: 1234">
+              <div class="form-text">비밀번호를 입력하지 않으면 기본 비밀번호(1234)가 설정됩니다.</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">이름 <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="userName" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">기사코드</label>
+              <input type="text" class="form-control" id="userEmployeeCode">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">소속팀</label>
+              <input type="text" class="form-control" id="userTeam">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">지역</label>
+              <input type="text" class="form-control" id="userRegion">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">역할</label>
+              <select class="form-select" id="userRole">
+                <option value="신청자">신청자</option>
+                <option value="관리자">관리자</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">활성화</label>
+              <select class="form-select" id="userActive">
+                <option value="Y">활성화</option>
+                <option value="N">비활성화</option>
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+          <button type="button" class="btn btn-primary" onclick="submitUser()" id="userSubmitBtn">등록</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 배송지 등록 모달 -->
+  <div class="modal fade" id="deliveryModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deliveryModalTitle">배송지 등록</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="deliveryForm">
+            <div class="mb-3">
+              <label class="form-label">배송지명 <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="deliveryName" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">소속팀 <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="deliveryTeam" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">주소</label>
+              <input type="text" class="form-control" id="deliveryAddress">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">연락처</label>
+              <input type="text" class="form-control" id="deliveryContact">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">담당자</label>
+              <input type="text" class="form-control" id="deliveryManager">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">활성화</label>
+              <select class="form-select" id="deliveryActive">
+                <option value="Y">활성화</option>
+                <option value="N">비활성화</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">비고</label>
+              <textarea class="form-control" id="deliveryRemarks" rows="2"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+          <button type="button" class="btn btn-primary" onclick="submitDelivery()" id="deliverySubmitBtn">등록</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <?!= include('JavaScript'); ?>
+  <script>
+    // 세션 토큰 가져오기
+    function getSessionToken() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('token') || sessionStorage.getItem('sessionToken');
+    }
+
+    // 페이지 로드 시 초기화
+    window.onload = async function() {
+      try {
+        const sessionToken = getSessionToken();
+        if (!sessionToken) {
+          window.location.href = '?page=login';
+          return;
+        }
+
+        // 사용자 정보 로드
+        const user = await callServer('getCurrentUser', sessionToken);
+        if (!user || user.role !== '관리자') {
+          showToast('관리자만 접근할 수 있습니다.', 'danger');
+          window.location.href = '?page=admin-dashboard&token=' + sessionToken;
+          return;
+        }
+
+        document.getElementById('headerUserName').textContent = user.name;
+
+        // 사용자 목록 로드
+        await loadUsers();
+        // 배송지 목록 로드
+        await loadDeliveryPlaces();
+      } catch (error) {
+        console.error('Initialization error:', error);
+        handleError(error);
+      }
+    };
+
+    // 캐시 (수정 시 사용)
+    let usersCache = [];
+    let deliveryPlacesCache = [];
+    let userEditMode = { mode: 'create', userId: null };
+    let deliveryEditMode = { mode: 'create', originalName: null, originalTeam: null };
+
+    // 사용자 목록 로드
+    async function loadUsers() {
+      try {
+        const sessionToken = getSessionToken();
+        const users = await callServer('getAllUsers', sessionToken);
+        usersCache = Array.isArray(users) ? users : [];
+        renderUsersTable(users);
+      } catch (error) {
+        handleError(error);
+      }
+    }
+
+    // 사용자 테이블 렌더링
+    function renderUsersTable(users) {
+      const tbody = document.getElementById('usersTableBody');
+      tbody.innerHTML = '';
+
+      if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">등록된 사용자가 없습니다.</td></tr>';
+        return;
+      }
+
+      users.forEach(user => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(user.userId)}</td>
+          <td>${escapeHtml(user.name)}</td>
+          <td>${escapeHtml(user.employeeCode || '-')}</td>
+          <td>${escapeHtml(user.team || '-')}</td>
+          <td>${escapeHtml(user.region || '-')}</td>
+          <td>${escapeHtml(user.role)}</td>
+          <td>${user.active === 'Y' ? '<span class="badge bg-success">활성</span>' : '<span class="badge bg-secondary">비활성</span>'}</td>
+          <td>
+            <button class="btn btn-sm btn-warning" onclick="editUser('${escapeHtml(user.userId)}')">수정</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 배송지 목록 로드
+    async function loadDeliveryPlaces() {
+      try {
+        const sessionToken = getSessionToken();
+        const places = await callServer('getAllDeliveryPlaces', sessionToken);
+        deliveryPlacesCache = Array.isArray(places) ? places : [];
+        
+        // 배열인지 확인
+        if (!Array.isArray(places)) {
+          console.error('getAllDeliveryPlaces returned non-array:', places);
+          renderDeliveryTable([]);
+          return;
+        }
+        
+        renderDeliveryTable(places);
+      } catch (error) {
+        console.error('loadDeliveryPlaces error:', error);
+        handleError(error);
+        renderDeliveryTable([]);
+      }
+    }
+
+    // 배송지 테이블 렌더링
+    function renderDeliveryTable(places) {
+      const tbody = document.getElementById('deliveryTableBody');
+      tbody.innerHTML = '';
+
+      console.log('renderDeliveryTable - places:', places, 'isArray:', Array.isArray(places));
+
+      // 배열이 아닌 경우 처리
+      if (!Array.isArray(places)) {
+        console.error('renderDeliveryTable: places is not an array:', places);
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">데이터를 불러오는데 실패했습니다.</td></tr>';
+        return;
+      }
+      
+      // 빈 배열인 경우
+      if (places.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">등록된 배송지가 없습니다.</td></tr>';
+        return;
+      }
+
+      if (places.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">등록된 배송지가 없습니다.</td></tr>';
+        return;
+      }
+
+      places.forEach(place => {
+        const key = encodeURIComponent((place['소속팀'] || '') + '|' + (place['배송지명'] || ''));
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(place['배송지명'] || '-')}</td>
+          <td>${escapeHtml(place['소속팀'] || '-')}</td>
+          <td>${escapeHtml(place['주소'] || '-')}</td>
+          <td>${escapeHtml(place['연락처'] || '-')}</td>
+          <td>${escapeHtml(place['담당자'] || '-')}</td>
+          <td>${place['활성화'] === 'Y' ? '<span class="badge bg-success">활성</span>' : '<span class="badge bg-secondary">비활성</span>'}</td>
+          <td>
+            <button class="btn btn-sm btn-warning" onclick="editDelivery('${key}')">수정</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 사용자 등록 폼 표시
+    function showUserForm() {
+      document.getElementById('userForm').reset();
+      userEditMode = { mode: 'create', userId: null };
+      document.getElementById('userModalTitle').textContent = '사용자 등록';
+      document.getElementById('userSubmitBtn').textContent = '등록';
+      document.getElementById('userId').disabled = false;
+      document.getElementById('userPassword').value = '';
+      document.getElementById('userPassword').placeholder = '기본: 1234';
+      const modal = new bootstrap.Modal(document.getElementById('userModal'));
+      modal.show();
+    }
+
+    // 사용자 등록
+    async function submitUser() {
+      try {
+        const sessionToken = getSessionToken();
+        const userData = {
+          userId: document.getElementById('userId').value,
+          password: document.getElementById('userPassword').value,
+          name: document.getElementById('userName').value,
+          employeeCode: document.getElementById('userEmployeeCode').value,
+          team: document.getElementById('userTeam').value,
+          region: document.getElementById('userRegion').value,
+          role: document.getElementById('userRole').value,
+          active: document.getElementById('userActive').value
+        };
+
+        const isEdit = userEditMode.mode === 'edit';
+        showLoading(isEdit ? '사용자 수정 중...' : '사용자 등록 중...');
+        const result = isEdit
+          ? await callServer('updateUser', userData, sessionToken)
+          : await callServer('createUser', userData, sessionToken);
+        hideLoading();
+
+        if (result.success) {
+          showToast(result.message, 'success');
+          bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+          await loadUsers();
+        } else {
+          showToast(result.message || '등록에 실패했습니다.', 'danger');
+        }
+      } catch (error) {
+        hideLoading();
+        handleError(error);
+      }
+    }
+
+    // 배송지 등록 폼 표시
+    function showDeliveryForm() {
+      document.getElementById('deliveryForm').reset();
+      deliveryEditMode = { mode: 'create', originalName: null, originalTeam: null };
+      document.getElementById('deliveryModalTitle').textContent = '배송지 등록';
+      document.getElementById('deliverySubmitBtn').textContent = '등록';
+      const modal = new bootstrap.Modal(document.getElementById('deliveryModal'));
+      modal.show();
+    }
+
+    // 배송지 등록
+    async function submitDelivery() {
+      try {
+        const sessionToken = getSessionToken();
+        const placeData = {
+          name: document.getElementById('deliveryName').value,
+          team: document.getElementById('deliveryTeam').value,
+          address: document.getElementById('deliveryAddress').value,
+          contact: document.getElementById('deliveryContact').value,
+          manager: document.getElementById('deliveryManager').value,
+          active: document.getElementById('deliveryActive').value,
+          remarks: document.getElementById('deliveryRemarks').value
+        };
+
+        const isEdit = deliveryEditMode.mode === 'edit';
+        if (isEdit) {
+          placeData.originalName = deliveryEditMode.originalName;
+          placeData.originalTeam = deliveryEditMode.originalTeam;
+        }
+
+        showLoading(isEdit ? '배송지 수정 중...' : '배송지 등록 중...');
+        const result = isEdit
+          ? await callServer('updateDeliveryPlace', placeData, sessionToken)
+          : await callServer('createDeliveryPlace', placeData, sessionToken);
+        hideLoading();
+
+        if (result.success) {
+          showToast(result.message, 'success');
+          bootstrap.Modal.getInstance(document.getElementById('deliveryModal')).hide();
+          await loadDeliveryPlaces();
+        } else {
+          showToast(result.message || '등록에 실패했습니다.', 'danger');
+        }
+      } catch (error) {
+        hideLoading();
+        handleError(error);
+      }
+    }
+
+    // CSV 파일 선택 처리
+    let selectedCSVFile = null;
+    
+    function handleCSVFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) {
+        selectedCSVFile = null;
+        document.getElementById('uploadCSVBtn').disabled = true;
+        return;
+      }
+      
+      if (!file.name.endsWith('.csv')) {
+        showToast('CSV 파일만 업로드 가능합니다.', 'warning');
+        event.target.value = '';
+        selectedCSVFile = null;
+        document.getElementById('uploadCSVBtn').disabled = true;
+        return;
+      }
+      
+      selectedCSVFile = file;
+      document.getElementById('uploadCSVBtn').disabled = false;
+      showToast('파일이 선택되었습니다: ' + file.name, 'success');
+    }
+
+    // CSV 파일 업로드
+    async function uploadCSVFile() {
+      if (!selectedCSVFile) {
+        showToast('파일을 선택해주세요.', 'warning');
+        return;
+      }
+      
+      try {
+        const sessionToken = getSessionToken();
+        
+        if (!confirm('CSV 파일을 업로드하여 배송지 정보를 등록하시겠습니까?\n기존 데이터와 중복될 수 있습니다.')) return;
+        
+        showLoading('CSV 파일을 읽는 중...');
+        
+        // 파일을 텍스트로 읽기
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          try {
+            const csvContent = e.target.result;
+            
+            // 서버로 전송
+            const result = await callServer('importDeliveryPlacesFromCSV', csvContent, sessionToken);
+            hideLoading();
+            
+            const resultDiv = document.getElementById('csvUploadResult');
+            if (result.success) {
+              resultDiv.innerHTML = `
+                <div class="alert alert-success">
+              <strong>업로드 완료!</strong><br>
+              ${result.message}<br>
+              <ul class="mt-2 mb-0">
+                ${result.imported.users !== undefined ? `<li>등록된 사용자: ${result.imported.users}명</li>` : ''}
+                <li>등록된 배송지: ${result.imported.deliveryPlaces}개</li>
+                ${result.imported.skippedUsers > 0 ? `<li>중복 사용자: ${result.imported.skippedUsers}명</li>` : ''}
+                ${result.imported.skippedPlaces > 0 ? `<li>중복 배송지: ${result.imported.skippedPlaces}개</li>` : ''}
+              </ul>
+                </div>
+              `;
+              showToast('CSV 파일이 성공적으로 업로드되었습니다.', 'success');
+              
+              // 파일 입력 초기화
+              document.getElementById('csvFileInput').value = '';
+              selectedCSVFile = null;
+              document.getElementById('uploadCSVBtn').disabled = true;
+              
+              // 목록 새로고침
+              setTimeout(() => {
+                loadUsers();
+                loadDeliveryPlaces();
+              }, 1000);
+            } else {
+              resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                  <strong>업로드 실패</strong><br>
+                  ${escapeHtml(result.message || '알 수 없는 오류가 발생했습니다.')}
+                  ${result.technical ? `<div class="mt-2 small text-muted">(${escapeHtml(result.technical)})</div>` : ''}
+                </div>
+              `;
+              showToast(result.message || '업로드에 실패했습니다.', 'danger');
+            }
+          } catch (error) {
+            hideLoading();
+            handleError(error);
+          }
+        };
+        
+        reader.onerror = function() {
+          hideLoading();
+          showToast('파일 읽기에 실패했습니다.', 'danger');
+        };
+        
+        reader.readAsText(selectedCSVFile, 'UTF-8');
+        
+      } catch (error) {
+        hideLoading();
+        handleError(error);
+      }
+    }
+
+    // Excel 마스터 파일 생성
+    async function generateMasterExcel() {
+      try {
+        if (!confirm('Excel 마스터 파일을 생성하시겠습니까?')) return;
+
+        const sessionToken = getSessionToken();
+        showLoading('Excel 파일 생성 중...');
+        const result = await callServer('exportMasterExcel', sessionToken);
+        hideLoading();
+
+        if (result.success) {
+          const resultDiv = document.getElementById('excelResult');
+          resultDiv.innerHTML = `
+            <div class="alert alert-success">
+              <strong>생성 완료!</strong><br>
+              파일명: ${escapeHtml(result.fileName)}<br>
+              <a href="${result.fileUrl}" target="_blank" class="btn btn-sm btn-primary mt-2">파일 열기</a>
+            </div>
+          `;
+          showToast('Excel 파일이 생성되었습니다.', 'success');
+        } else {
+          showToast(result.message || '파일 생성에 실패했습니다.', 'danger');
+        }
+      } catch (error) {
+        hideLoading();
+        handleError(error);
+      }
+    }
+
+    // 사용자 수정
+    function editUser(userId) {
+      const u = (usersCache || []).find(x => String(x.userId) === String(userId));
+      if (!u) {
+        showToast('사용자 정보를 찾을 수 없습니다.', 'warning');
+        return;
+      }
+
+      userEditMode = { mode: 'edit', userId: u.userId };
+      document.getElementById('userModalTitle').textContent = '사용자 수정';
+      document.getElementById('userSubmitBtn').textContent = '저장';
+
+      document.getElementById('userId').value = u.userId || '';
+      document.getElementById('userId').disabled = true; // 키 변경 방지
+      document.getElementById('userPassword').value = '';
+      document.getElementById('userPassword').placeholder = '비워두면 비밀번호 유지';
+      document.getElementById('userName').value = u.name || '';
+      document.getElementById('userEmployeeCode').value = u.employeeCode || '';
+      document.getElementById('userTeam').value = u.team || '';
+      document.getElementById('userRegion').value = u.region || '';
+      document.getElementById('userRole').value = u.role || '신청자';
+      document.getElementById('userActive').value = u.active || 'Y';
+
+      const modal = new bootstrap.Modal(document.getElementById('userModal'));
+      modal.show();
+    }
+
+    // 배송지 수정
+    function editDelivery(encodedKey) {
+      const decoded = decodeURIComponent(encodedKey || '');
+      const parts = decoded.split('|');
+      const team = (parts[0] || '').trim();
+      const name = (parts.slice(1).join('|') || '').trim();
+
+      const p = (deliveryPlacesCache || []).find(x =>
+        String(x['소속팀'] || '').trim() === team &&
+        String(x['배송지명'] || '').trim() === name
+      );
+
+      if (!p) {
+        showToast('배송지 정보를 찾을 수 없습니다.', 'warning');
+        return;
+      }
+
+      deliveryEditMode = { mode: 'edit', originalName: name, originalTeam: team };
+      document.getElementById('deliveryModalTitle').textContent = '배송지 수정';
+      document.getElementById('deliverySubmitBtn').textContent = '저장';
+
+      document.getElementById('deliveryName').value = p['배송지명'] || '';
+      document.getElementById('deliveryTeam').value = p['소속팀'] || '';
+      document.getElementById('deliveryAddress').value = p['주소'] || '';
+      document.getElementById('deliveryContact').value = p['연락처'] || '';
+      document.getElementById('deliveryManager').value = p['담당자'] || '';
+      document.getElementById('deliveryActive').value = p['활성화'] || 'Y';
+      document.getElementById('deliveryRemarks').value = p['비고'] || '';
+
+      const modal = new bootstrap.Modal(document.getElementById('deliveryModal'));
+      modal.show();
+    }
+
+    // 뒤로가기
+    function goBack() {
+      const sessionToken = getSessionToken();
+      window.location.href = '?page=admin-dashboard&token=' + sessionToken;
+    }
+
+    // 로그아웃
+    function logout() {
+      if (confirm('로그아웃하시겠습니까?')) {
+        try {
+          const sessionToken = getSessionToken();
+          // 서버 로그아웃 호출 (실패해도 클라이언트 정리 진행)
+          if (sessionToken) {
+            callServer('logout', sessionToken).then(() => {
+              console.log('Logout successful');
+            }).catch(error => {
+              console.error('Logout server error:', error);
+            });
+          }
+          
+          // 클라이언트 세션 정리
+          sessionStorage.removeItem('sessionToken');
+          sessionStorage.removeItem('currentUser');
+          sessionStorage.removeItem('pendingRequestNo');
+          sessionStorage.removeItem('pendingPage');
+          sessionStorage.removeItem('adminStatusFilter');
+          
+          // iframe 환경 고려한 리다이렉트
+          const loginUrl = '?page=login';
+          if (window.top && window.top !== window) {
+            // iframe 내부인 경우
+            window.top.location.href = loginUrl;
+          } else {
+            // 일반 페이지인 경우
+            window.location.href = loginUrl;
+          }
+        } catch (error) {
+          console.error('Logout error:', error);
+          // 에러 발생 시에도 클라이언트 정리 및 리다이렉트
+          sessionStorage.removeItem('sessionToken');
+          sessionStorage.removeItem('currentUser');
+          sessionStorage.removeItem('pendingRequestNo');
+          sessionStorage.removeItem('pendingPage');
+          sessionStorage.removeItem('adminStatusFilter');
+          
+          const loginUrl = '?page=login';
+          if (window.top && window.top !== window) {
+            window.top.location.href = loginUrl;
+          } else {
+            window.location.href = loginUrl;
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>
+

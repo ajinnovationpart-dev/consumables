@@ -1,0 +1,621 @@
+<style>
+  /* ==========================================
+     AJ 디자인 시스템 v3.0 기반 스타일
+     ========================================== */
+  
+  /* 디자인 토큰 - AJ 디자인 시스템 */
+  :root {
+    /* 색상 팔레트 */
+    --aj-primary: #0066CC;
+    --aj-primary-light: #3399FF;
+    --aj-primary-dark: #004499;
+    --aj-secondary: #6C757D;
+    --aj-success: #28A745;
+    --aj-success-light: #5CB85C;
+    --aj-warning: #FFC107;
+    --aj-warning-light: #FFD54F;
+    --aj-danger: #DC3545;
+    --aj-danger-light: #E57373;
+    --aj-info: #17A2B8;
+    --aj-info-light: #5BC0DE;
+    
+    /* 그레이스케일 */
+    --aj-gray-50: #F8F9FA;
+    --aj-gray-100: #E9ECEF;
+    --aj-gray-200: #DEE2E6;
+    --aj-gray-300: #CED4DA;
+    --aj-gray-400: #ADB5BD;
+    --aj-gray-500: #6C757D;
+    --aj-gray-600: #495057;
+    --aj-gray-700: #343A40;
+    --aj-gray-800: #212529;
+    --aj-gray-900: #0D1117;
+    
+    /* 배경색 */
+    --aj-bg-primary: #FFFFFF;
+    --aj-bg-secondary: #F8F9FA;
+    --aj-bg-tertiary: #E9ECEF;
+    
+    /* 텍스트 색상 */
+    --aj-text-primary: #212529;
+    --aj-text-secondary: #6C757D;
+    --aj-text-tertiary: #ADB5BD;
+    --aj-text-inverse: #FFFFFF;
+    
+    /* 타이포그래피 */
+    --aj-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    --aj-font-size-xs: 0.75rem;    /* 12px */
+    --aj-font-size-sm: 0.875rem;   /* 14px */
+    --aj-font-size-base: 1rem;     /* 16px */
+    --aj-font-size-lg: 1.125rem;   /* 18px */
+    --aj-font-size-xl: 1.25rem;    /* 20px */
+    --aj-font-size-2xl: 1.5rem;    /* 24px */
+    --aj-font-size-3xl: 1.875rem;  /* 30px */
+    --aj-font-size-4xl: 2.25rem;   /* 36px */
+    
+    --aj-font-weight-light: 300;
+    --aj-font-weight-normal: 400;
+    --aj-font-weight-medium: 500;
+    --aj-font-weight-semibold: 600;
+    --aj-font-weight-bold: 700;
+    
+    --aj-line-height-tight: 1.25;
+    --aj-line-height-normal: 1.5;
+    --aj-line-height-relaxed: 1.75;
+    
+    /* 간격 (Spacing) */
+    --aj-spacing-xs: 0.25rem;   /* 4px */
+    --aj-spacing-sm: 0.5rem;    /* 8px */
+    --aj-spacing-md: 1rem;      /* 16px */
+    --aj-spacing-lg: 1.5rem;    /* 24px */
+    --aj-spacing-xl: 2rem;      /* 32px */
+    --aj-spacing-2xl: 3rem;     /* 48px */
+    --aj-spacing-3xl: 4rem;     /* 64px */
+    
+    /* 보더 반경 */
+    --aj-radius-sm: 0.25rem;    /* 4px */
+    --aj-radius-md: 0.5rem;     /* 8px */
+    --aj-radius-lg: 0.75rem;    /* 12px */
+    --aj-radius-xl: 1rem;       /* 16px */
+    --aj-radius-2xl: 1.5rem;    /* 24px */
+    --aj-radius-full: 9999px;
+    
+    /* 그림자 */
+    --aj-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --aj-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --aj-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --aj-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    
+    /* 트랜지션 */
+    --aj-transition-fast: 150ms ease-in-out;
+    --aj-transition-base: 250ms ease-in-out;
+    --aj-transition-slow: 350ms ease-in-out;
+    
+    /* 모바일 변수 */
+    --mobile-font-base: 16px;
+    --mobile-input-height: 44px;
+    --mobile-button-height: 44px;
+  }
+  
+  /* ==========================================
+     기본 스타일 리셋 및 개선
+     ========================================== */
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  
+  body {
+    font-family: var(--aj-font-family);
+    font-size: var(--aj-font-size-base);
+    line-height: var(--aj-line-height-normal);
+    color: var(--aj-text-primary);
+    background-color: var(--aj-bg-secondary);
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* ==========================================
+     타이포그래피
+     ========================================== */
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--aj-font-family);
+    font-weight: var(--aj-font-weight-bold);
+    line-height: var(--aj-line-height-tight);
+    color: var(--aj-text-primary);
+    margin-top: 0;
+    margin-bottom: var(--aj-spacing-md);
+  }
+  
+  h1 { font-size: var(--aj-font-size-4xl); }
+  h2 { font-size: var(--aj-font-size-3xl); }
+  h3 { font-size: var(--aj-font-size-2xl); }
+  h4 { font-size: var(--aj-font-size-xl); }
+  h5 { font-size: var(--aj-font-size-lg); }
+  h6 { font-size: var(--aj-font-size-base); }
+  
+  p, span, div, a, li, label {
+    font-size: var(--aj-font-size-base);
+    line-height: var(--aj-line-height-normal);
+    color: var(--aj-text-primary);
+  }
+  
+  /* ==========================================
+     버튼 스타일 - AJ 디자인 시스템
+     ========================================== */
+  
+  .btn {
+    font-family: var(--aj-font-family);
+    font-size: var(--aj-font-size-base);
+    font-weight: var(--aj-font-weight-semibold);
+    line-height: 1.5;
+    padding: var(--aj-spacing-sm) var(--aj-spacing-lg);
+    min-height: 44px;
+    border-radius: var(--aj-radius-md);
+    border: none;
+    cursor: pointer;
+    transition: all var(--aj-transition-base);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: var(--aj-shadow-sm);
+  }
+  
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--aj-shadow-md);
+  }
+  
+  .btn:active {
+    transform: translateY(0);
+    box-shadow: var(--aj-shadow-sm);
+  }
+  
+  .btn-primary {
+    background-color: var(--aj-primary);
+    color: var(--aj-text-inverse);
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--aj-primary-dark);
+  }
+  
+  .btn-success {
+    background-color: var(--aj-success);
+    color: var(--aj-text-inverse);
+  }
+  
+  .btn-success:hover {
+    background-color: #218838;
+  }
+  
+  .btn-danger {
+    background-color: var(--aj-danger);
+    color: var(--aj-text-inverse);
+  }
+  
+  .btn-danger:hover {
+    background-color: #C82333;
+  }
+  
+  .btn-outline-primary {
+    background-color: transparent;
+    color: var(--aj-primary);
+    border: 2px solid var(--aj-primary);
+  }
+  
+  .btn-outline-primary:hover {
+    background-color: var(--aj-primary);
+    color: var(--aj-text-inverse);
+  }
+  
+  .btn-sm {
+    font-size: var(--aj-font-size-sm);
+    padding: var(--aj-spacing-xs) var(--aj-spacing-md);
+    min-height: 36px;
+  }
+  
+  .btn-lg {
+    font-size: var(--aj-font-size-lg);
+    padding: var(--aj-spacing-md) var(--aj-spacing-xl);
+    min-height: 52px;
+    font-weight: var(--aj-font-weight-bold);
+  }
+  
+  /* ==========================================
+     카드 스타일 - AJ 디자인 시스템
+     ========================================== */
+  
+  .card {
+    background-color: var(--aj-bg-primary);
+    border: 1px solid var(--aj-gray-200);
+    border-radius: var(--aj-radius-lg);
+    box-shadow: var(--aj-shadow-sm);
+    margin-bottom: var(--aj-spacing-lg);
+    transition: all var(--aj-transition-base);
+    overflow: hidden;
+  }
+  
+  .card:hover {
+    box-shadow: var(--aj-shadow-md);
+    transform: translateY(-2px);
+  }
+  
+  .card-header {
+    background-color: var(--aj-bg-secondary);
+    border-bottom: 1px solid var(--aj-gray-200);
+    padding: var(--aj-spacing-lg);
+    font-weight: var(--aj-font-weight-semibold);
+    font-size: var(--aj-font-size-lg);
+  }
+  
+  .card-body {
+    padding: var(--aj-spacing-lg);
+  }
+  
+  .card-footer {
+    background-color: var(--aj-bg-secondary);
+    border-top: 1px solid var(--aj-gray-200);
+    padding: var(--aj-spacing-md) var(--aj-spacing-lg);
+  }
+  
+  /* 통계 카드 특별 스타일 */
+  .card.text-center {
+    text-align: center;
+  }
+  
+  .card.text-center .card-body {
+    padding: var(--aj-spacing-md) var(--aj-spacing-lg);
+  }
+  
+  .card.text-center h2,
+  .card.text-center h3 {
+    font-size: 2.5rem;
+    font-weight: var(--aj-font-weight-bold);
+    margin: var(--aj-spacing-sm) 0;
+    color: var(--aj-primary);
+  }
+  
+  .card.text-center h6 {
+    font-size: var(--aj-font-size-base);
+    font-weight: var(--aj-font-weight-semibold);
+    color: var(--aj-text-secondary);
+    margin-bottom: var(--aj-spacing-sm);
+  }
+  
+  /* ==========================================
+     폼 스타일 - AJ 디자인 시스템
+     ========================================== */
+  
+  .form-label {
+    font-weight: var(--aj-font-weight-medium);
+    margin-bottom: var(--aj-spacing-sm);
+    color: var(--aj-text-primary);
+    font-size: var(--aj-font-size-base);
+  }
+  
+  .form-control,
+  .form-select {
+    font-family: var(--aj-font-family);
+    font-size: var(--aj-font-size-base);
+    padding: var(--aj-spacing-sm) var(--aj-spacing-md);
+    min-height: 44px;
+    border: 2px solid var(--aj-gray-300);
+    border-radius: var(--aj-radius-md);
+    background-color: var(--aj-bg-primary);
+    color: var(--aj-text-primary);
+    transition: all var(--aj-transition-base);
+  }
+  
+  .form-control:focus,
+  .form-select:focus {
+    outline: none;
+    border-color: var(--aj-primary);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+  }
+  
+  .form-control::placeholder {
+    color: var(--aj-text-tertiary);
+  }
+  
+  textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+  }
+  
+  /* ==========================================
+     테이블 스타일 - AJ 디자인 시스템
+     ========================================== */
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--aj-font-size-base);
+  }
+  
+  .table thead th {
+    background-color: var(--aj-bg-secondary);
+    color: var(--aj-text-primary);
+    font-weight: var(--aj-font-weight-semibold);
+    padding: var(--aj-spacing-md);
+    text-align: left;
+    border-bottom: 2px solid var(--aj-gray-300);
+  }
+  
+  .table tbody td {
+    padding: var(--aj-spacing-md);
+    border-bottom: 1px solid var(--aj-gray-200);
+  }
+  
+  .table tbody tr:hover {
+    background-color: var(--aj-bg-secondary);
+    transition: background-color var(--aj-transition-fast);
+  }
+  
+  .table-responsive {
+    border-radius: var(--aj-radius-md);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* ==========================================
+     배지 스타일 - AJ 디자인 시스템
+     ========================================== */
+  
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--aj-spacing-xs) var(--aj-spacing-sm);
+    font-size: var(--aj-font-size-sm);
+    font-weight: var(--aj-font-weight-medium);
+    border-radius: var(--aj-radius-full);
+    white-space: nowrap;
+  }
+  
+  .badge-접수중 {
+    background-color: #FFF3CD;
+    color: #856404;
+  }
+  
+  .badge-접수완료 {
+    background-color: #D1ECF1;
+    color: #0C5460;
+  }
+  
+  .badge-발주진행 {
+    background-color: #CCE5FF;
+    color: #004085;
+  }
+  
+  .badge-발주지연 {
+    background-color: #F8D7DA;
+    color: #721C24;
+  }
+  
+  .badge-발주완료 {
+    background-color: #D4EDDA;
+    color: #155724;
+  }
+  
+  .badge-처리완료 {
+    background-color: var(--aj-success);
+    color: var(--aj-text-inverse);
+  }
+  
+  .badge-접수취소 {
+    background-color: var(--aj-secondary);
+    color: var(--aj-text-inverse);
+  }
+  
+  /* ==========================================
+     네비게이션 바 - AJ 디자인 시스템
+     ========================================== */
+  
+  .navbar {
+    background-color: var(--aj-primary);
+    padding: var(--aj-spacing-md) var(--aj-spacing-lg);
+    box-shadow: var(--aj-shadow-md);
+  }
+  
+  .navbar-brand {
+    font-size: var(--aj-font-size-xl);
+    font-weight: var(--aj-font-weight-bold);
+    color: var(--aj-text-inverse);
+  }
+  
+  /* ==========================================
+     로딩 오버레이 - AJ 디자인 시스템
+     ========================================== */
+  
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+  }
+  
+  .loading-overlay .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.3em;
+    border-color: var(--aj-primary);
+    border-right-color: transparent;
+  }
+  
+  /* ==========================================
+     애니메이션 - AJ 디자인 시스템
+     ========================================== */
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  .fade-in {
+    animation: fadeIn var(--aj-transition-base);
+  }
+  
+  .slide-in {
+    animation: slideIn var(--aj-transition-base);
+  }
+  
+  /* ==========================================
+     모바일 최적화
+     ========================================== */
+  
+  @media (max-width: 768px) {
+    :root {
+      --mobile-font-base: 18px;
+      --mobile-input-height: 52px;
+      --mobile-button-height: 52px;
+    }
+    
+    html {
+      font-size: 18px;
+    }
+    
+    body {
+      font-size: var(--aj-font-size-base);
+    }
+    
+    .btn {
+      font-size: var(--aj-font-size-base);
+      padding: var(--aj-spacing-md) var(--aj-spacing-lg);
+      min-height: var(--mobile-button-height);
+    }
+    
+    .btn-lg {
+      font-size: var(--aj-font-size-lg);
+      padding: var(--aj-spacing-lg) var(--aj-spacing-xl);
+      min-height: 60px;
+    }
+    
+    .form-control,
+    .form-select {
+      font-size: var(--mobile-font-base);
+      min-height: var(--mobile-input-height);
+      padding: var(--aj-spacing-md);
+    }
+    
+    .card {
+      border-radius: var(--aj-radius-xl);
+      margin-bottom: var(--aj-spacing-xl);
+    }
+    
+    .card-header {
+      padding: var(--aj-spacing-lg);
+      font-size: var(--aj-font-size-lg);
+    }
+    
+    .card-body {
+      padding: var(--aj-spacing-lg);
+    }
+    
+    .table {
+      font-size: var(--aj-font-size-sm);
+    }
+    
+    .table thead th,
+    .table tbody td {
+      padding: var(--aj-spacing-sm) var(--aj-spacing-md);
+    }
+    
+    h1 { font-size: var(--aj-font-size-3xl); }
+    h2 { font-size: var(--aj-font-size-2xl); }
+    h3 { font-size: var(--aj-font-size-xl); }
+    h4 { font-size: var(--aj-font-size-lg); }
+    h5 { font-size: var(--aj-font-size-base); }
+    h6 { font-size: var(--aj-font-size-sm); }
+  }
+  
+  @media (max-width: 480px) {
+    html {
+      font-size: 16px;
+    }
+    
+    .container,
+    .container-fluid {
+      padding: var(--aj-spacing-md);
+    }
+  }
+  
+  /* ==========================================
+     유틸리티 클래스
+     ========================================== */
+  
+  .text-primary { color: var(--aj-primary) !important; }
+  .text-success { color: var(--aj-success) !important; }
+  .text-danger { color: var(--aj-danger) !important; }
+  .text-warning { color: var(--aj-warning) !important; }
+  .text-info { color: var(--aj-info) !important; }
+  .text-muted { color: var(--aj-text-secondary) !important; }
+  
+  .bg-primary { background-color: var(--aj-primary) !important; }
+  .bg-success { background-color: var(--aj-success) !important; }
+  .bg-danger { background-color: var(--aj-danger) !important; }
+  .bg-warning { background-color: var(--aj-warning) !important; }
+  .bg-info { background-color: var(--aj-info) !important; }
+  
+  .shadow-sm { box-shadow: var(--aj-shadow-sm) !important; }
+  .shadow-md { box-shadow: var(--aj-shadow-md) !important; }
+  .shadow-lg { box-shadow: var(--aj-shadow-lg) !important; }
+  
+  /* ==========================================
+     성능 최적화
+     ========================================== */
+  
+  /* GPU 가속을 위한 transform 사용 */
+  .card,
+  .btn,
+  .table tbody tr {
+    will-change: transform;
+  }
+  
+  /* 이미지 최적화 */
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+  
+  /* 스크롤 최적화 */
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+</style>

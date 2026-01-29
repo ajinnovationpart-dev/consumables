@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>부품발주시스템 - 대시보드</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <?!= include('Stylesheet'); ?>
+</head>
+<body>
+  <!-- 헤더 -->
+  <nav class="navbar navbar-dark bg-primary mb-3">
+    <div class="container-fluid px-2">
+      <span class="navbar-brand mb-0">🏠 부품발주</span>
+      <div class="d-flex align-items-center flex-wrap gap-1">
+        <span class="text-white d-none d-md-inline me-2 small">
+          👤 <span id="userName"></span> (<span id="userTeam"></span>)
+        </span>
+        <button class="btn btn-sm btn-light position-relative" onclick="showNotifications()">
+          🔔
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount">0</span>
+        </button>
+        <button class="btn btn-sm btn-outline-light" onclick="logout()">로그아웃</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid px-2">
+    <!-- 요약 카드 -->
+    <div class="row g-2 mb-3">
+      <div class="col-6 col-md-3">
+        <div class="card text-center border-warning h-100">
+          <div class="card-body p-3 p-md-3">
+            <h6 class="card-title mb-2 mb-md-2 fw-bold">접수중</h6>
+            <h2 class="text-warning mb-0 fw-bold" id="countRequested">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card text-center border-info h-100">
+          <div class="card-body p-3 p-md-3">
+            <h6 class="card-title mb-2 mb-md-2 fw-bold">진행중</h6>
+            <h2 class="text-info mb-0 fw-bold" id="countInProgress">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card text-center border-success h-100">
+          <div class="card-body p-3 p-md-3">
+            <h6 class="card-title mb-2 mb-md-2 fw-bold">완료</h6>
+            <h2 class="text-success mb-0 fw-bold" id="countCompleted">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card text-center border-primary h-100">
+          <div class="card-body p-3 p-md-3">
+            <h6 class="card-title mb-2 mb-md-2 fw-bold">전체</h6>
+            <h2 class="text-primary mb-0 fw-bold" id="countTotal">0</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 빠른 액션 -->
+    <div class="d-grid gap-2 d-md-block mb-3">
+      <button class="btn btn-primary btn-lg w-100 w-md-auto" onclick="navigateToNewRequest()">
+        ➕ 새 신청 등록
+      </button>
+      <button class="btn btn-outline-primary btn-lg w-100 w-md-auto ms-md-2 mt-2 mt-md-0" onclick="navigateToMyRequests()">
+        📋 내 신청 목록
+      </button>
+      <button class="btn btn-outline-secondary btn-lg w-100 w-md-auto ms-md-2 mt-2 mt-md-0" onclick="navigateToMyInfo()">
+        ⚙️ 내 정보
+      </button>
+    </div>
+
+    <!-- 최근 신청 내역 -->
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">📋 최근 신청 내역</h5>
+        <a href="#" onclick="navigateToMyRequests(); return false;">전체 보기 →</a>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover" style="table-layout: auto;">
+            <thead>
+              <tr>
+                <th>신청번호</th>
+                <th>품명</th>
+                <th>수량</th>
+                <th>상태</th>
+                <th>신청일</th>
+                <th>액션</th>
+              </tr>
+            </thead>
+            <tbody id="recentRequestsBody">
+              <tr>
+                <td colspan="6" class="text-center text-muted">로딩 중...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 중요 알림 -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">🔔 중요 알림</h5>
+      </div>
+      <div class="card-body">
+        <div id="notificationsList">
+          <p class="text-muted">알림이 없습니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <?!= include('JavaScript'); ?>
+  <script>
+    // 전역 에러 핸들러 - 빈 페이지 방지
+    window.addEventListener('error', function(e) {
+      console.error('Global error caught:', e.error || e.message);
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'alert alert-danger m-4';
+      errorDiv.style.position = 'fixed';
+      errorDiv.style.top = '20px';
+      errorDiv.style.left = '50%';
+      errorDiv.style.transform = 'translateX(-50%)';
+      errorDiv.style.zIndex = '9999';
+      errorDiv.style.maxWidth = '600px';
+      errorDiv.innerHTML = `
+        <h5>⚠️ 페이지 로딩 오류</h5>
+        <p><strong>오류:</strong> ${e.message || '알 수 없는 오류'}</p>
+        <button class="btn btn-primary btn-sm" onclick="window.location.reload()">새로고침</button>
+        <button class="btn btn-secondary btn-sm" onclick="window.location.href='?page=login'">로그인</button>
+      `;
+      document.body.appendChild(errorDiv);
+    });
+
+    // 전역 변수: 웹 앱 URL 캐싱
+    let cachedWebAppUrl = null;
+
+    // 세션 토큰 가져오기
+    function getSessionToken() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('token') || sessionStorage.getItem('sessionToken');
+    }
+
+    // 웹 앱 URL 가져오기 (서버에서)
+    async function getWebAppUrl() {
+      if (cachedWebAppUrl) {
+        return cachedWebAppUrl;
+      }
+      
+      try {
+        const url = await callServer('getWebAppUrl');
+        cachedWebAppUrl = url;
+        console.log('Web App URL from server:', url);
+        return url;
+      } catch (error) {
+        console.error('Failed to get web app URL:', error);
+        return null;
+      }
+    }
+
+    // 페이지 초기화
+    window.onload = async function() {
+      try {
+        const startTime = performance.now();
+        console.log('✅ UserDashboard: Initializing...');
+        
+        const sessionToken = getSessionToken();
+        if (!sessionToken) {
+          window.location.href = '?page=login';
+          return;
+        }
+
+        showLoading('대시보드 로딩 중...');
+
+        // ✅ 사용자 정보 캐시 확인
+        let user = sessionStorage.getItem('currentUser');
+        if (user) {
+          user = JSON.parse(user);
+          console.log('✅ Using cached user info');
+        } else {
+          user = await callServer('getCurrentUser', sessionToken);
+          if (user) {
+            sessionStorage.setItem('currentUser', JSON.stringify(user));
+          }
+        }
+        
+        if (!user) {
+          hideLoading();
+          window.location.href = '?page=login';
+          return;
+        }
+
+        displayUserInfo(user);
+
+        // ✅ 배치 API 사용 (1회 호출로 모든 데이터 조회)
+        console.log('⏱️ Loading dashboard data via batch API...');
+        const dashboardData = await callServer('getDashboardData', sessionToken);
+        
+        if (dashboardData && dashboardData.success) {
+          // 통계 표시
+          if (dashboardData.stats && typeof dashboardData.stats === 'object') {
+            displayStats(dashboardData.stats);
+          } else {
+            console.error('Invalid stats response:', dashboardData.stats);
+            displayStats({ requested: 0, inProgress: 0, completed: 0, total: 0 });
+          }
+          
+          // 최근 신청 내역 표시
+          if (Array.isArray(dashboardData.recentRequests)) {
+            displayRecentRequests(dashboardData.recentRequests);
+          } else {
+            console.error('Invalid recentRequests response:', dashboardData.recentRequests);
+            displayRecentRequests([]);
+          }
+          
+          // 알림 표시
+          if (Array.isArray(dashboardData.notifications)) {
+            displayNotifications(dashboardData.notifications);
+          } else {
+            console.error('Invalid notifications response:', dashboardData.notifications);
+            displayNotifications([]);
+          }
+        } else {
+          console.error('Dashboard data load failed:', dashboardData);
+          displayStats({ requested: 0, inProgress: 0, completed: 0, total: 0 });
+          displayRecentRequests([]);
+          displayNotifications([]);
+        }
+
+        hideLoading();
+        
+        const loadTime = (performance.now() - startTime).toFixed(0);
+        console.log(`✅ UserDashboard loaded in ${loadTime}ms`);
+      } catch (error) {
+        console.error('UserDashboard init error:', error);
+        console.error('Error stack:', error.stack);
+        hideLoading();
+        showToast('대시보드 로딩 실패: ' + (error.message || '알 수 없는 오류'), 'danger');
+      }
+    };
+
+    // 사용자 정보 표시
+    function displayUserInfo(user) {
+      document.getElementById('userName').textContent = user.name;
+      document.getElementById('userTeam').textContent = user.team;
+    }
+
+    // 통계 표시
+    function displayStats(stats) {
+      document.getElementById('countRequested').textContent = stats.requested || 0;
+      document.getElementById('countInProgress').textContent = stats.inProgress || 0;
+      document.getElementById('countCompleted').textContent = stats.completed || 0;
+      document.getElementById('countTotal').textContent = stats.total || 0;
+    }
+
+    // 최근 신청 내역 표시
+    function displayRecentRequests(requests) {
+      const tbody = document.getElementById('recentRequestsBody');
+      tbody.innerHTML = '';
+
+      if (!requests || requests.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">신청 내역이 없습니다.</td></tr>';
+        return;
+      }
+
+      requests.forEach(req => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${escapeHtml(req.requestNo)}</strong></td>
+          <td>${escapeHtml(req.itemName)}</td>
+          <td>${req.quantity}</td>
+          <td><span class="badge bg-${getStatusColor(req.status)}">${escapeHtml(req.status)}</span></td>
+          <td>${escapeHtml(req.requestDate)}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary" onclick="viewDetail('${req.requestNo}')">
+              상세
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 알림 표시
+    function displayNotifications(notifications) {
+      const container = document.getElementById('notificationsList');
+      container.innerHTML = '';
+
+      if (!notifications || notifications.length === 0) {
+        container.innerHTML = '<p class="text-muted">새 알림이 없습니다.</p>';
+        document.getElementById('notificationCount').textContent = '0';
+        return;
+      }
+
+      notifications.forEach(notif => {
+        const div = document.createElement('div');
+        div.className = 'alert alert-info alert-dismissible fade show mb-2';
+        div.innerHTML = `
+          ${escapeHtml(notif.message)}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        container.appendChild(div);
+      });
+
+      document.getElementById('notificationCount').textContent = notifications.length;
+    }
+
+    // 상태별 색상
+    function getStatusColor(status) {
+      const colors = {
+        '접수중': 'warning',
+        '발주진행': 'primary',
+        '발주완료(납기확인)': 'success',
+        '발주완료(납기미정)': 'info',
+        '처리완료': 'success',
+        '접수취소': 'secondary'
+      };
+      return colors[status] || 'secondary';
+    }
+
+    // 요약 통계 조회
+    async function getRequestStats(sessionToken) {
+      try {
+        const requests = await callServer('getMyRequests', {}, sessionToken);
+        
+        const stats = {
+          requested: 0,
+          inProgress: 0,
+          completed: 0,
+          total: requests.length
+        };
+
+        requests.forEach(req => {
+          if (req.status === '접수중') {
+            stats.requested++;
+          } else if (['발주진행', '발주완료(납기확인)', '발주완료(납기미정)'].includes(req.status)) {
+            stats.inProgress++;
+          } else if (req.status === '처리완료') {
+            stats.completed++;
+          }
+        });
+
+        return stats;
+      } catch (error) {
+        console.error('getRequestStats error:', error);
+        return { requested: 0, inProgress: 0, completed: 0, total: 0 };
+      }
+    }
+
+    // 알림 조회
+    async function getNotifications(sessionToken) {
+      try {
+        const requests = await callServer('getMyRequests', {}, sessionToken);
+        const notifications = [];
+
+        requests.forEach(req => {
+          if (req.status === '발주완료(납기확인)' || req.status === '발주완료(납기미정)') {
+            notifications.push({
+              type: 'success',
+              message: `[신청번호 ${req.requestNo}] 발주가 완료되었습니다. 수령 확인을 부탁드립니다.`,
+              requestNo: req.requestNo
+            });
+          }
+          // 발주지연 상태는 제거됨
+          if (false) {
+            notifications.push({
+              type: 'warning',
+              message: `[신청번호 ${req.requestNo}] 발주가 지연되고 있습니다.`,
+              requestNo: req.requestNo
+            });
+          }
+        });
+
+        return notifications.slice(0, 5);
+      } catch (error) {
+        console.error('getNotifications error:', error);
+        return [];
+      }
+    }
+
+    // 화면 전환
+    async function navigateToNewRequest() {
+      try {
+        console.log('navigateToNewRequest: Starting...');
+        const sessionToken = getSessionToken();
+        console.log('Session token for navigation:', sessionToken ? 'Present' : 'Missing');
+        
+        if (!sessionToken) {
+          console.error('No session token, redirecting to login');
+          window.location.href = '?page=login';
+          return;
+        }
+        
+        // 서버에서 실제 웹 앱 URL 가져오기
+        const baseUrl = await getWebAppUrl();
+        
+        if (!baseUrl) {
+          console.error('Failed to get web app URL');
+          showToast('페이지 이동 중 오류가 발생했습니다.', 'danger');
+          return;
+        }
+        
+        const targetUrl = baseUrl + '?page=new-request&token=' + encodeURIComponent(sessionToken);
+        console.log('Base URL from server:', baseUrl);
+        console.log('Full target URL:', targetUrl);
+        
+        // iframe 내부에서 실행 중이면 최상위 창을 리다이렉트
+        if (window.top && window.top !== window) {
+          console.log('Inside iframe, redirecting parent window');
+          window.top.location.href = targetUrl;
+        } else {
+          console.log('Not in iframe, direct redirect');
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('navigateToNewRequest error:', error);
+        showToast('페이지 이동 중 오류가 발생했습니다.', 'danger');
+      }
+    }
+
+    async function navigateToMyRequests() {
+      try {
+        const sessionToken = getSessionToken();
+        const baseUrl = await getWebAppUrl();
+        if (!baseUrl) return;
+        
+        const targetUrl = baseUrl + '?page=my-requests&token=' + encodeURIComponent(sessionToken);
+        
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+        } else {
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('navigateToMyRequests error:', error);
+      }
+    }
+
+    async function navigateToMyInfo() {
+      try {
+        const sessionToken = getSessionToken();
+        const baseUrl = await getWebAppUrl();
+        if (!baseUrl) return;
+        
+        const targetUrl = baseUrl + '?page=my-info&token=' + encodeURIComponent(sessionToken);
+        
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+        } else {
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('navigateToMyInfo error:', error);
+      }
+    }
+
+    async function viewDetail(requestNo) {
+      try {
+        console.log('viewDetail called with requestNo:', requestNo);
+        const sessionToken = getSessionToken();
+        console.log('Session token:', sessionToken ? 'Present' : 'Missing');
+        
+        // ✅ sessionStorage에 파라미터 저장 (OAuth 리다이렉션 대비)
+        sessionStorage.setItem('pendingRequestNo', requestNo);
+        sessionStorage.setItem('pendingPage', 'detail');
+        console.log('Saved to sessionStorage:', { requestNo, page: 'detail' });
+        
+        const baseUrl = await getWebAppUrl();
+        console.log('Base URL:', baseUrl);
+        
+        if (!baseUrl) {
+          showToast('페이지 이동 중 오류가 발생했습니다.', 'danger');
+          return;
+        }
+        
+        const targetUrl = baseUrl + '?page=detail&requestNo=' + encodeURIComponent(requestNo) + '&token=' + encodeURIComponent(sessionToken);
+        console.log('Target URL:', targetUrl);
+        console.log('Navigating to detail page...');
+        
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+        } else {
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('viewDetail error:', error);
+        showToast('페이지 이동 실패: ' + error.message, 'danger');
+      }
+    }
+
+    function showNotifications() {
+      // 알림 모달 표시 (추후 구현)
+      alert('알림 기능은 추후 구현 예정입니다.');
+    }
+
+    function logout() {
+      if (confirm('로그아웃하시겠습니까?')) {
+        try {
+          const sessionToken = getSessionToken();
+          // 서버 로그아웃 호출 (실패해도 클라이언트 정리 진행)
+          callServer('logout', sessionToken).then(() => {
+            console.log('Logout successful');
+          }).catch(error => {
+            console.error('Logout server error:', error);
+          }).finally(() => {
+            // 클라이언트 세션 정리
+            sessionStorage.removeItem('sessionToken');
+            sessionStorage.removeItem('currentUser');
+            sessionStorage.removeItem('pendingRequestNo');
+            sessionStorage.removeItem('pendingPage');
+            sessionStorage.removeItem('adminStatusFilter');
+            
+            // iframe 환경 고려한 리다이렉트
+            const loginUrl = '?page=login';
+            if (window.top && window.top !== window) {
+              // iframe 내부인 경우
+              window.top.location.href = loginUrl;
+            } else {
+              // 일반 페이지인 경우
+              window.location.href = loginUrl;
+            }
+          });
+        } catch (error) {
+          console.error('Logout error:', error);
+          // 에러 발생 시에도 클라이언트 정리 및 리다이렉트
+          sessionStorage.removeItem('sessionToken');
+          sessionStorage.removeItem('currentUser');
+          sessionStorage.removeItem('pendingRequestNo');
+          sessionStorage.removeItem('pendingPage');
+          sessionStorage.removeItem('adminStatusFilter');
+          
+          const loginUrl = '?page=login';
+          if (window.top && window.top !== window) {
+            window.top.location.href = loginUrl;
+          } else {
+            window.location.href = loginUrl;
+          }
+        }
+      }
+    }
+
+    // 스크립트 로드 완료 확인
+    console.log('✓ UserDashboard script loaded');
+  </script>
+</body>
+</html>
+

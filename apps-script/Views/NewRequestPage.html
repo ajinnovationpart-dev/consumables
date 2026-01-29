@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>신청 등록</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <?!= include('Stylesheet'); ?>
+  <script>
+    // 최우선 로그 - HTML 로드 시작
+    console.log('🔵 NewRequestPage: HTML loaded, waiting for scripts...');
+  </script>
+</head>
+<body>
+  <script>
+    // 두 번째 로그 - Body 시작
+    console.log('🔵 NewRequestPage: Body loaded');
+  </script>
+  <!-- 헤더 -->
+  <nav class="navbar navbar-dark bg-primary mb-3">
+    <div class="container-fluid px-2">
+      <span class="navbar-brand mb-0">🏠 부품발주</span>
+      <div class="d-flex align-items-center">
+        <span class="text-white d-none d-md-inline me-2 small">
+          👤 <span id="headerUserName"></span> (<span id="headerUserTeam"></span>)
+        </span>
+        <button class="btn btn-sm btn-outline-light" onclick="goBack()">← 뒤로</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid px-2 mt-2">
+    <div class="d-flex align-items-center mb-3">
+      <h2 class="h4 mb-0">신청 등록</h2>
+    </div>
+
+    <form id="requestForm" onsubmit="handleSubmit(event)">
+      <!-- 신청자 정보 (읽기 전용) -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">📋 신청자 정보 (자동 입력)</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-12 col-md-4 mb-2 mb-md-3">
+              <label class="form-label">이름</label>
+              <input type="text" class="form-control" id="requesterName" readonly>
+            </div>
+            <div class="col-12 col-md-4 mb-2 mb-md-3">
+              <label class="form-label">소속팀</label>
+              <input type="text" class="form-control" id="requesterTeam" readonly>
+            </div>
+            <div class="col-12 col-md-4 mb-2 mb-md-3">
+              <label class="form-label">지역</label>
+              <input type="text" class="form-control" id="requesterRegion" readonly>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 부품 정보 -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">🔧 부품 정보</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-12 col-md-6 mb-2 mb-md-3">
+              <label class="form-label">
+                품명 <span class="text-danger">*</span>
+              </label>
+              <input type="text" 
+                     class="form-control" 
+                     id="itemName" 
+                     placeholder="예: 연료필터"
+                     required>
+              <div class="form-text small">발주할 부품의 이름을 입력하세요.</div>
+            </div>
+            
+            <div class="col-12 col-md-6 mb-2 mb-md-3">
+              <label class="form-label">규격</label>
+              <input type="text" 
+                     class="form-control" 
+                     id="modelName" 
+                     placeholder="예: HD-123">
+              <div class="form-text small">부품의 규격을 입력하세요.</div>
+            </div>
+            
+            <div class="col-12 col-md-4 mb-2 mb-md-3">
+              <label class="form-label">
+                수량 <span class="text-danger">*</span>
+              </label>
+              <input type="number" 
+                     class="form-control" 
+                     id="quantity" 
+                     min="1" 
+                     value="1"
+                     required>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+              <label class="form-label">
+                관리번호 <span class="text-danger">*</span>
+              </label>
+              <input type="text" 
+                     class="form-control" 
+                     id="assetNo" 
+                     placeholder="예: DS25C305"
+                     required>
+              <div class="form-text">장비의 관리번호를 입력하세요.</div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+              <label class="form-label">시리얼번호</label>
+              <input type="text" 
+                     class="form-control" 
+                     id="serialNo" 
+                     placeholder="예: SN-12345">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 수령 정보 -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">📦 수령 정보</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">배송지</label>
+              <select class="form-select" id="deliveryPlace">
+                <option value="">선택하세요</option>
+                <option value="기타">기타 (직접 입력)</option>
+              </select>
+            </div>
+            
+            <div class="col-md-6 mb-3" id="customDeliveryPlaceDiv" style="display:none;">
+              <label class="form-label">배송지 직접 입력</label>
+              <input type="text" 
+                     class="form-control" 
+                     id="customDeliveryPlace" 
+                     placeholder="배송지를 입력하세요">
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label class="form-label">전화번호</label>
+              <input type="tel" 
+                     class="form-control" 
+                     id="phone" 
+                     placeholder="010-1234-5678"
+                     pattern="[0-9]{3}-[0-9]{4}-[0-9]{4}">
+              <div class="form-text">형식: 010-1234-5678</div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label class="form-label">업체명</label>
+              <input type="text" 
+                     class="form-control" 
+                     id="company" 
+                     placeholder="협력 업체명">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 사진 첨부 -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">📷 사진 첨부 <span class="text-danger">*</span></h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <button type="button" class="btn btn-outline-primary me-2" onclick="capturePhoto()">
+              📷 사진 촬영
+            </button>
+            <button type="button" class="btn btn-outline-secondary" onclick="selectFile()">
+              📁 파일 선택
+            </button>
+            <input type="file" 
+                   id="photoInput" 
+                   accept="image/*" 
+                   capture="environment"
+                   style="display:none;"
+                   onchange="handlePhotoSelect(event)"
+                   required>
+          </div>
+          
+          <div id="photoPreviewContainer" style="display:none;">
+            <div class="position-relative d-inline-block">
+              <img id="photoPreview" 
+                   class="img-thumbnail" 
+                   style="max-width: 300px; max-height: 300px;">
+              <button type="button" 
+                      class="btn btn-sm btn-danger position-absolute top-0 end-0"
+                      onclick="removePhoto()">
+                ✕
+              </button>
+            </div>
+            <p class="mt-2">
+              <span id="photoFileName"></span> 
+              (<span id="photoFileSize"></span>)
+            </p>
+          </div>
+          
+          <div class="alert alert-info mt-3">
+            <small>
+              💡 팁: 부품 또는 장비의 사진을 첨부해주세요. 
+              사진은 5MB 이하, JPG/PNG 형식만 가능합니다.
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- 비고 -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">📝 비고</h5>
+        </div>
+        <div class="card-body">
+          <textarea class="form-control" 
+                    id="remarks" 
+                    rows="4"
+                    placeholder="추가로 전달할 내용이 있으면 입력하세요."></textarea>
+        </div>
+      </div>
+
+      <!-- 제출 버튼 -->
+      <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-5">
+        <button type="button" class="btn btn-secondary" onclick="goBack()">
+          취소
+        </button>
+        <button type="submit" class="btn btn-primary btn-lg">
+          신청하기
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    console.log('🔵 NewRequestPage: Bootstrap loaded');
+  </script>
+  <?!= include('JavaScript'); ?>
+  <script>
+    console.log('🔵 NewRequestPage: JavaScript.html included');
+    console.log('🔵 Checking callServer:', typeof callServer);
+    console.log('🔵 Checking showLoading:', typeof showLoading);
+    
+    // 전역 에러 핸들러 - 빈 페이지 방지
+    window.addEventListener('error', function(e) {
+      console.error('🔴 Global error caught:', e.error || e.message);
+      console.error('🔴 Error details:', e);
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'alert alert-danger m-4';
+      errorDiv.style.position = 'fixed';
+      errorDiv.style.top = '20px';
+      errorDiv.style.left = '50%';
+      errorDiv.style.transform = 'translateX(-50%)';
+      errorDiv.style.zIndex = '9999';
+      errorDiv.style.maxWidth = '600px';
+      errorDiv.innerHTML = `
+        <h5>⚠️ 페이지 로딩 오류</h5>
+        <p><strong>오류:</strong> ${e.message || '알 수 없는 오류'}</p>
+        <p><small>${e.filename || ''} ${e.lineno ? '(' + e.lineno + ':' + e.colno + ')' : ''}</small></p>
+        <button class="btn btn-primary btn-sm" onclick="window.location.reload()">새로고침</button>
+        <button class="btn btn-secondary btn-sm" onclick="history.back()">뒤로가기</button>
+      `;
+      document.body.appendChild(errorDiv);
+    });
+
+    let currentUser = null;
+    let photoFile = null;
+
+    // 세션 토큰 가져오기
+    function getSessionToken() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('token') || sessionStorage.getItem('sessionToken');
+    }
+
+    console.log('🔵 NewRequestPage: Functions defined');
+
+    // 페이지 초기화
+    window.onload = async function() {
+      try {
+        const startTime = performance.now();
+        console.log('✅ NewRequestPage: Initializing...');
+        
+        const sessionToken = getSessionToken();
+        if (!sessionToken) {
+          window.location.href = '?page=login';
+          return;
+        }
+
+        showLoading('사용자 정보를 불러오는 중...');
+
+        // ✅ 사용자 정보 캐시 확인
+        let currentUser = sessionStorage.getItem('currentUser');
+        if (currentUser) {
+          currentUser = JSON.parse(currentUser);
+          console.log('✅ Using cached user info');
+        } else {
+          currentUser = await callServer('getCurrentUser', sessionToken);
+          if (currentUser) {
+            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+          }
+        }
+        
+        if (!currentUser) {
+          hideLoading();
+          window.location.href = '?page=login';
+          return;
+        }
+
+        // 화면에 사용자 정보 표시
+        document.getElementById('requesterName').value = currentUser.name || '';
+        document.getElementById('requesterTeam').value = currentUser.team || '';
+        document.getElementById('requesterRegion').value = currentUser.region || '';
+        document.getElementById('headerUserName').textContent = currentUser.name || '';
+        document.getElementById('headerUserTeam').textContent = currentUser.team || '';
+
+        // 파트별 배송지 목록 로드
+        try {
+          const deliveryPlaces = await callServer('getDeliveryPlaces', currentUser.team, sessionToken);
+          const deliverySelect = document.getElementById('deliveryPlace');
+          
+          // 응답 타입 검증
+          if (!Array.isArray(deliveryPlaces)) {
+            console.error('Invalid deliveryPlaces response:', deliveryPlaces);
+            // 빈 배열로 처리
+          } else {
+            // 기존 옵션 제거 (선택하세요, 기타 제외)
+            while (deliverySelect.options.length > 2) {
+              deliverySelect.remove(1); // 첫 번째 옵션(선택하세요)과 마지막 옵션(기타) 제외
+            }
+            
+            // 파트별 배송지 추가
+            if (deliveryPlaces.length > 0) {
+            deliveryPlaces.forEach(place => {
+              const option = document.createElement('option');
+              option.value = place['배송지명'] || place.name;
+              option.textContent = place['배송지명'] || place.name;
+              deliverySelect.insertBefore(option, deliverySelect.lastElementChild); // "기타" 앞에 추가
+            });
+            }
+          }
+          
+          // 사용자의 최근 신청 내역에서 가장 많이 사용한 배송지 자동 선택
+          const myRequests = await callServer('getMyRequests', {}, sessionToken);
+          if (Array.isArray(myRequests) && myRequests.length > 0) {
+            // 배송지별 사용 빈도 계산
+            const deliveryPlaceCount = {};
+            myRequests.forEach(req => {
+              if (req.deliveryPlace) {
+                deliveryPlaceCount[req.deliveryPlace] = (deliveryPlaceCount[req.deliveryPlace] || 0) + 1;
+              }
+            });
+            
+            // 가장 많이 사용한 배송지 찾기
+            let mostUsedPlace = null;
+            let maxCount = 0;
+            Object.keys(deliveryPlaceCount).forEach(place => {
+              if (deliveryPlaceCount[place] > maxCount) {
+                maxCount = deliveryPlaceCount[place];
+                mostUsedPlace = place;
+              }
+            });
+            
+            // 자동 선택
+            if (mostUsedPlace) {
+              // 옵션 목록에 있는지 확인
+              let found = false;
+              for (let i = 0; i < deliverySelect.options.length; i++) {
+                if (deliverySelect.options[i].value === mostUsedPlace) {
+                  deliverySelect.value = mostUsedPlace;
+                  found = true;
+                  break;
+                }
+              }
+              
+              // 옵션 목록에 없으면 "기타" 선택하고 직접 입력 필드에 값 설정
+              if (!found) {
+                deliverySelect.value = '기타';
+                document.getElementById('customDeliveryPlaceDiv').style.display = 'block';
+                document.getElementById('customDeliveryPlace').value = mostUsedPlace;
+              }
+            }
+          }
+        } catch (error) {
+          console.log('Failed to load delivery places:', error);
+          // 실패해도 계속 진행
+        }
+
+        hideLoading();
+        
+        const loadTime = (performance.now() - startTime).toFixed(0);
+        console.log(`✅ NewRequestPage loaded in ${loadTime}ms`);
+      } catch (error) {
+        console.error('NewRequestPage init error:', error);
+        hideLoading();
+        showToast('초기화 실패: ' + (error.message || '알 수 없는 오류'), 'danger');
+      }
+    };
+
+    // 배송지 선택 이벤트
+    document.getElementById('deliveryPlace').addEventListener('change', function() {
+      const customDiv = document.getElementById('customDeliveryPlaceDiv');
+      if (this.value === '기타') {
+        customDiv.style.display = 'block';
+        document.getElementById('customDeliveryPlace').required = true;
+      } else {
+        customDiv.style.display = 'none';
+        document.getElementById('customDeliveryPlace').required = false;
+      }
+    });
+
+    // 전화번호 자동 포맷팅 (숫자만 입력 시 - 자동 추가)
+    document.getElementById('phone').addEventListener('input', function(e) {
+      let value = e.target.value.replace(/[^0-9]/g, ''); // 숫자만 추출
+      
+      if (value.length > 0) {
+        if (value.length <= 3) {
+          value = value;
+        } else if (value.length <= 7) {
+          value = value.slice(0, 3) + '-' + value.slice(3);
+        } else if (value.length <= 11) {
+          value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7);
+        } else {
+          value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7, 11);
+        }
+      }
+      
+      e.target.value = value;
+    });
+
+    // 사진 촬영
+    function capturePhoto() {
+      const input = document.getElementById('photoInput');
+      input.setAttribute('capture', 'environment');
+      input.click();
+    }
+
+    // 파일 선택
+    function selectFile() {
+      const input = document.getElementById('photoInput');
+      input.removeAttribute('capture');
+      input.click();
+    }
+
+    // 사진 선택 처리
+    async function handlePhotoSelect(event) {
+      const file = event.target.files[0];
+      
+      if (!file) return;
+      
+      // 파일 크기 검증
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        showToast('파일 크기는 5MB를 초과할 수 없습니다.', 'danger');
+        event.target.value = '';
+        return;
+      }
+      
+      // 파일 형식 검증
+      if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+        showToast('JPG, PNG 형식만 업로드 가능합니다.', 'danger');
+        event.target.value = '';
+        return;
+      }
+      
+      try {
+        photoFile = file;
+        
+        // 미리보기 표시
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('photoPreview').src = e.target.result;
+          document.getElementById('photoFileName').textContent = file.name;
+          document.getElementById('photoFileSize').textContent = formatFileSize(file.size);
+          document.getElementById('photoPreviewContainer').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+        
+      } catch (error) {
+        showToast('이미지 처리 실패: ' + error.message, 'danger');
+      }
+    }
+
+    // 사진 삭제
+    function removePhoto() {
+      document.getElementById('photoInput').value = '';
+      document.getElementById('photoPreviewContainer').style.display = 'none';
+      photoFile = null;
+    }
+
+    // 파일 크기 포맷팅
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' Bytes';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+      return (bytes / 1048576).toFixed(2) + ' MB';
+    }
+
+    // 폼 제출
+    async function handleSubmit(event) {
+      event.preventDefault();
+      
+      try {
+        console.log('handleSubmit: Starting...');
+        
+        // 유효성 검증
+        if (!validateForm()) {
+          console.log('Form validation failed');
+          return;
+        }
+        
+        const sessionToken = getSessionToken();
+        if (!sessionToken) {
+          console.warn('No session token for submit');
+          showToast('로그인이 필요합니다.', 'warning');
+          window.location.href = '?page=login';
+          return;
+        }
+        
+        showLoading('신청 처리 중...');
+        
+        // 폼 데이터 수집
+        const formData = {
+          itemName: document.getElementById('itemName').value.trim(),
+          modelName: document.getElementById('modelName').value.trim(),
+          quantity: parseInt(document.getElementById('quantity').value),
+          assetNo: document.getElementById('assetNo').value.trim(),
+          serialNo: document.getElementById('serialNo').value.trim(),
+          deliveryPlace: getDeliveryPlace(),
+          phone: document.getElementById('phone').value.trim(),
+          company: document.getElementById('company').value.trim(),
+          remarks: document.getElementById('remarks').value.trim()
+        };
+        
+        console.log('Form data:', formData);
+        
+        // 사진 Base64 인코딩
+        if (photoFile) {
+          console.log('Encoding photo to Base64...');
+          formData.photoBase64 = await fileToBase64(photoFile);
+          console.log('Photo encoded, size:', formData.photoBase64.length);
+        }
+        
+        // 서버 전송
+        console.log('Calling createRequest API...');
+        const result = await callServer('createRequest', formData, sessionToken);
+        console.log('createRequest result:', result);
+        
+        // 중복 접수 체크
+        if (result.isDuplicate) {
+          hideLoading();
+          const duplicateMessage = `중복 접수가 감지되었습니다.\n\n신청번호: ${result.duplicateRequestNo}\n\n기존 신청을 확인하시겠습니까?`;
+          if (confirm(duplicateMessage)) {
+            // 기존 신청 상세 페이지로 이동
+            sessionStorage.setItem('pendingRequestNo', result.duplicateRequestNo);
+            sessionStorage.setItem('pendingPage', 'detail');
+            const baseUrl = await callServer('getWebAppUrl');
+            if (baseUrl) {
+              window.top.location.href = baseUrl + '?page=detail&requestNo=' + result.duplicateRequestNo + '&token=' + encodeURIComponent(sessionToken);
+            }
+          }
+          return;
+        }
+        
+        if (result.success) {
+          console.log('Request created successfully:', result.requestNo);
+          
+          // 성공 메시지와 함께 즉시 대시보드로 이동
+          hideLoading();
+          
+          // 성공 모달 표시
+          const modal = document.createElement('div');
+          modal.className = 'modal fade show';
+          modal.style.display = 'block';
+          modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+          modal.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                  <h5 class="modal-title">✅ 신청 완료</h5>
+                </div>
+                <div class="modal-body text-center">
+                  <p class="mb-2"><strong>신청이 완료되었습니다!</strong></p>
+                  <p class="text-muted">신청번호: <strong>${result.requestNo}</strong></p>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-primary" onclick="navigateToDashboard()">
+                    대시보드로 이동
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(modal);
+          
+          return; // 여기서 종료
+        } else {
+          console.error('Request creation failed:', result.message);
+          showToast('신청 실패: ' + result.message, 'danger');
+        }
+        
+      } catch (error) {
+        console.error('handleSubmit error:', error);
+        console.error('Error stack:', error.stack);
+        showToast('신청 처리 중 오류: ' + (error.message || '알 수 없는 오류'), 'danger');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // 유효성 검증
+    function validateForm() {
+      // 품명 검증
+      const itemName = document.getElementById('itemName').value.trim();
+      if (!itemName) {
+        showToast('품명을 입력해주세요.', 'warning');
+        document.getElementById('itemName').focus();
+        return false;
+      }
+      
+      // 수량 검증
+      const quantity = parseInt(document.getElementById('quantity').value);
+      if (!quantity || quantity < 1) {
+        showToast('수량은 1 이상이어야 합니다.', 'warning');
+        document.getElementById('quantity').focus();
+        return false;
+      }
+      
+      // 관리번호 검증
+      const assetNo = document.getElementById('assetNo').value.trim();
+      if (!assetNo) {
+        showToast('관리번호를 입력해주세요.', 'warning');
+        document.getElementById('assetNo').focus();
+        return false;
+      }
+      
+      // 사진 검증
+      if (!photoFile) {
+        showToast('사진을 첨부해주세요.', 'warning');
+        return false;
+      }
+      
+      // 전화번호 형식 검증 (입력된 경우)
+      const phone = document.getElementById('phone').value.trim();
+      if (phone) {
+        const phoneRegex = /^01[0-9]-[0-9]{4}-[0-9]{4}$/;
+        if (!phoneRegex.test(phone)) {
+          showToast('전화번호 형식이 올바르지 않습니다. (예: 010-1234-5678)', 'warning');
+          document.getElementById('phone').focus();
+          return false;
+        }
+      }
+      
+      return true;
+    }
+
+    // 배송지 값 가져오기
+    function getDeliveryPlace() {
+      const select = document.getElementById('deliveryPlace');
+      if (select.value === '기타') {
+        return document.getElementById('customDeliveryPlace').value.trim();
+      }
+      return select.value;
+    }
+
+    // File to Base64
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // 성공 메시지
+    function showSuccess(message) {
+      const modal = document.createElement('div');
+      modal.className = 'modal fade';
+      modal.id = 'successModal';
+      modal.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+              <h5 class="modal-title">✅ 신청 완료</h5>
+            </div>
+            <div class="modal-body text-center">
+              <p>${message}</p>
+              <p class="text-muted">잠시 후 대시보드로 이동합니다...</p>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      const bsModal = new bootstrap.Modal(modal);
+      bsModal.show();
+    }
+
+    async function goBack() {
+      try {
+        const sessionToken = getSessionToken();
+        const baseUrl = await callServer('getWebAppUrl');
+        if (!baseUrl) return;
+        
+        const targetUrl = baseUrl + '?page=dashboard&token=' + encodeURIComponent(sessionToken);
+        
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+        } else {
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('goBack error:', error);
+        window.location.href = '?page=login';
+      }
+    }
+
+    async function navigateToDashboard() {
+      try {
+        console.log('navigateToDashboard: Starting...');
+        const sessionToken = getSessionToken();
+        
+        // 서버에서 실제 웹 앱 URL 가져오기
+        const baseUrl = await callServer('getWebAppUrl');
+        console.log('Base URL from server:', baseUrl);
+        
+        if (!baseUrl) {
+          console.error('Failed to get web app URL');
+          showToast('페이지 이동 중 오류가 발생했습니다.', 'danger');
+          return;
+        }
+        
+        const targetUrl = baseUrl + '?page=dashboard&token=' + encodeURIComponent(sessionToken);
+        console.log('Target URL:', targetUrl);
+        
+        // 직접 리다이렉트 (사용자 클릭 이벤트 내에서 실행되므로 안전)
+        if (window.top && window.top !== window) {
+          console.log('Redirecting parent window...');
+          window.top.location.href = targetUrl;
+        } else {
+          console.log('Redirecting current window...');
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('navigateToDashboard error:', error);
+        showToast('페이지 이동 중 오류: ' + error.message, 'danger');
+      }
+    }
+
+    // 스크립트 로드 완료 확인
+    console.log('✓ NewRequestPage script loaded');
+  </script>
+</body>
+</html>
+

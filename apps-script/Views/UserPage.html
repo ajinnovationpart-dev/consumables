@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>부품 발주 신청</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <?!= include('Stylesheet'); ?>
+</head>
+<body>
+  <div class="container-fluid px-2 mt-2">
+    <h2 class="h4 mb-3">부품 발주 신청</h2>
+    
+    <!-- 신청 폼 -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">신규 신청</h5>
+      </div>
+      <div class="card-body">
+        <form id="requestForm">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">신청자</label>
+              <input type="text" class="form-control" id="userName" readonly>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label class="form-label">소속팀</label>
+              <input type="text" class="form-control" id="userTeam" readonly>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">품명 <span class="required">*</span></label>
+            <input type="text" class="form-control" id="itemName" required>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">수량 <span class="required">*</span></label>
+              <input type="number" class="form-control" id="quantity" min="1" required>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label class="form-label">관리번호 <span class="required">*</span></label>
+              <input type="text" class="form-control" id="assetNo" required>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">모델명</label>
+              <input type="text" class="form-control" id="modelName">
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label class="form-label">시리얼번호</label>
+              <input type="text" class="form-control" id="serialNo">
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">사진 첨부 <span class="required">*</span></label>
+            <input type="file" class="form-control" id="photo" accept="image/jpeg,image/png,image/jpg" required 
+                   onchange="showPhotoPreview(this, 'photoPreview')">
+            <div class="form-text">최대 5MB, JPG/PNG 형식</div>
+            <img id="photoPreview" class="photo-preview" style="display: none;">
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">지역</label>
+              <select class="form-select" id="region"></select>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label class="form-label">배송지</label>
+              <select class="form-select" id="deliveryPlace">
+                <option value="">선택하세요</option>
+                <option value="기타">기타 (직접 입력)</option>
+              </select>
+              <div class="mt-2" id="customDeliveryPlaceDiv" style="display:none;">
+                <input type="text" class="form-control" id="customDeliveryPlace" placeholder="배송지를 직접 입력하세요">
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">전화번호</label>
+              <input type="tel" class="form-control" id="phone" placeholder="010-1234-5678">
+            </div>
+            
+            <div class="col-md-6 mb-3">
+              <label class="form-label">업체명</label>
+              <input type="text" class="form-control" id="company">
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">비고</label>
+            <textarea class="form-control" id="remarks" rows="3"></textarea>
+          </div>
+          
+          <button type="submit" class="btn btn-primary">신청하기</button>
+        </form>
+      </div>
+    </div>
+    
+    <!-- 내 신청 현황 -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">내 신청 현황</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover" id="myRequestsTable">
+            <thead>
+              <tr>
+                <th>신청번호</th>
+                <th>신청일</th>
+                <th>품명</th>
+                <th>수량</th>
+                <th>상태</th>
+                <th>담당자</th>
+                <th>액션</th>
+              </tr>
+            </thead>
+            <tbody id="myRequestsBody">
+              <tr>
+                <td colspan="7" class="text-center">로딩 중...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <?!= include('JavaScript'); ?>
+  <script>
+    // 세션 토큰 가져오기
+    function getSessionToken() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('token') || sessionStorage.getItem('sessionToken');
+    }
+    
+    // 페이지 로드 시 초기화
+    window.onload = async function() {
+      try {
+        const sessionToken = getSessionToken();
+        if (!sessionToken) {
+          window.location.href = '?page=login';
+          return;
+        }
+        
+        showLoading('사용자 정보를 불러오는 중...');
+        
+        // 사용자 정보 로드
+        const user = await callServer('getCurrentUser', sessionToken);
+        if (!user) {
+          window.location.href = '?page=login';
+          return;
+        }
+        
+        if (user) {
+          document.getElementById('userName').value = user.name;
+          document.getElementById('userTeam').value = user.team;
+        }
+        
+        // 코드 목록 로드
+        const codes = await callServer('getCodeList');
+        if (codes && codes.regions) {
+          const regionSelect = document.getElementById('region');
+          codes.regions.forEach(region => {
+            const option = document.createElement('option');
+            option.value = region.name;
+            option.textContent = region.name;
+            regionSelect.appendChild(option);
+          });
+        }
+        
+        // 파트별 배송지 목록 로드
+        try {
+          const deliveryPlaces = await callServer('getDeliveryPlaces', user.team, sessionToken);
+          const deliverySelect = document.getElementById('deliveryPlace');
+          
+          // 기존 옵션 제거 (선택하세요, 기타 제외)
+          while (deliverySelect.options.length > 2) {
+            deliverySelect.remove(1); // 첫 번째 옵션(선택하세요)과 마지막 옵션(기타) 제외
+          }
+          
+          // 파트별 배송지 추가
+          if (deliveryPlaces && deliveryPlaces.length > 0) {
+            deliveryPlaces.forEach(place => {
+              const option = document.createElement('option');
+              option.value = place['배송지명'] || place.name;
+              option.textContent = place['배송지명'] || place.name;
+              deliverySelect.insertBefore(option, deliverySelect.lastElementChild); // "기타" 앞에 추가
+            });
+          }
+        } catch (error) {
+          console.log('Failed to load delivery places:', error);
+        }
+        
+        // 배송지 선택 이벤트
+        document.getElementById('deliveryPlace').addEventListener('change', function() {
+          const customDiv = document.getElementById('customDeliveryPlaceDiv');
+          if (this.value === '기타') {
+            customDiv.style.display = 'block';
+            document.getElementById('customDeliveryPlace').required = true;
+          } else {
+            customDiv.style.display = 'none';
+            document.getElementById('customDeliveryPlace').required = false;
+          }
+        });
+        
+        // 내 신청 목록 로드
+        await loadMyRequests();
+        
+        hideLoading();
+      } catch (error) {
+        hideLoading();
+        handleError(error);
+        // 세션 오류 시 로그인 페이지로
+        if (error.message && error.message.includes('로그인')) {
+          window.location.href = '?page=login';
+        }
+      }
+    };
+    
+    // 내 신청 목록 로드
+    async function loadMyRequests() {
+      try {
+        const sessionToken = getSessionToken();
+        const requests = await callServer('getMyRequests', {}, sessionToken);
+        renderMyRequestsTable(requests);
+      } catch (error) {
+        handleError(error);
+      }
+    }
+    
+    // 테이블 렌더링
+    function renderMyRequestsTable(requests) {
+      const tbody = document.getElementById('myRequestsBody');
+      tbody.innerHTML = '';
+      
+      if (requests.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">신청 내역이 없습니다.</td></tr>';
+        return;
+      }
+      
+      requests.forEach(req => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(req.requestNo)}</td>
+          <td>${escapeHtml(req.requestDate)}</td>
+          <td>${escapeHtml(req.itemName)}</td>
+          <td>${req.quantity}</td>
+          <td>${createStatusBadge(req.status)}</td>
+          <td>${escapeHtml(req.handler || '-')}</td>
+          <td>
+            ${req.canCancel ? `<button class="btn btn-sm btn-danger" onclick="cancelRequest('${req.requestNo}')">취소</button>` : ''}
+            ${req.canConfirmReceipt ? `<button class="btn btn-sm btn-success" onclick="confirmReceipt('${req.requestNo}')">수령확인</button>` : ''}
+            ${!req.canCancel && !req.canConfirmReceipt ? '-' : ''}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    
+    // 신청 폼 제출
+    document.getElementById('requestForm').onsubmit = async function(e) {
+      e.preventDefault();
+      
+      try {
+        const sessionToken = getSessionToken();
+        if (!sessionToken) {
+          showToast('로그인이 필요합니다.', 'warning');
+          window.location.href = '?page=login';
+          return;
+        }
+        
+        showLoading('신청 처리 중...');
+        
+        const formData = {
+          itemName: document.getElementById('itemName').value,
+          quantity: document.getElementById('quantity').value,
+          assetNo: document.getElementById('assetNo').value,
+          modelName: document.getElementById('modelName').value,
+          serialNo: document.getElementById('serialNo').value,
+          region: document.getElementById('region').value,
+          deliveryPlace: (() => {
+            const select = document.getElementById('deliveryPlace');
+            if (select.value === '기타') {
+              return document.getElementById('customDeliveryPlace').value;
+            }
+            return select.value;
+          })(),
+          phone: document.getElementById('phone').value,
+          company: document.getElementById('company').value,
+          remarks: document.getElementById('remarks').value
+        };
+        
+        // 파일 업로드 처리
+        const fileInput = document.getElementById('photo');
+        if (fileInput.files.length > 0) {
+          formData.photoBase64 = await uploadPhoto(fileInput);
+        }
+        
+        const result = await callServer('createRequest', formData, sessionToken);
+        
+        hideLoading();
+        
+        if (result.success) {
+          showToast('신청이 완료되었습니다. 신청번호: ' + result.requestNo, 'success');
+          document.getElementById('requestForm').reset();
+          document.getElementById('photoPreview').style.display = 'none';
+          await loadMyRequests();
+        } else {
+          showToast(result.message || '신청에 실패했습니다.', 'danger');
+        }
+      } catch (error) {
+        hideLoading();
+        handleError(error);
+      }
+    };
+    
+    // 신청 취소
+    async function cancelRequest(requestNo) {
+      if (!confirm('정말 취소하시겠습니까?')) return;
+      
+      try {
+        const sessionToken = getSessionToken();
+        showLoading('취소 처리 중...');
+        const result = await callServer('cancelRequest', requestNo, sessionToken);
+        hideLoading();
+        
+        if (result.success) {
+          showToast('신청이 취소되었습니다.', 'success');
+          await loadMyRequests();
+        } else {
+          showToast(result.message || '취소에 실패했습니다.', 'danger');
+        }
+      } catch (error) {
+        hideLoading();
+        handleError(error);
+      }
+    }
+    
+    // 수령 확인
+    async function confirmReceipt(requestNo) {
+      if (!confirm('수령을 확인하시겠습니까?')) return;
+      
+      try {
+        const sessionToken = getSessionToken();
+        showLoading('수령 확인 처리 중...');
+        const result = await callServer('confirmReceipt', requestNo, sessionToken);
+        hideLoading();
+        
+        if (result.success) {
+          showToast('수령 확인이 완료되었습니다.', 'success');
+          await loadMyRequests();
+        } else {
+          showToast(result.message || '처리에 실패했습니다.', 'danger');
+        }
+      } catch (error) {
+        hideLoading();
+        handleError(error);
+      }
+    }
+  </script>
+</body>
+</html>
+

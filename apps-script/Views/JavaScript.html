@@ -1,0 +1,509 @@
+<script>
+  // ==========================================
+  // 성능 최적화: 메모리 캐시 관리자
+  // ==========================================
+  
+  class MemoryCache {
+    constructor(maxSize = 100, ttl = 300000) { // 기본 5분
+      this.cache = new Map();
+      this.maxSize = maxSize;
+      this.defaultTTL = ttl;
+    }
+    
+    get(key) {
+      const item = this.cache.get(key);
+      if (!item) return null;
+      
+      if (Date.now() > item.expiry) {
+        this.cache.delete(key);
+        return null;
+      }
+      
+      return item.value;
+    }
+    
+    set(key, value, ttl = this.defaultTTL) {
+      // 캐시 크기 제한
+      if (this.cache.size >= this.maxSize) {
+        const firstKey = this.cache.keys().next().value;
+        this.cache.delete(firstKey);
+      }
+      
+      this.cache.set(key, {
+        value: value,
+        expiry: Date.now() + ttl
+      });
+    }
+    
+    remove(key) {
+      this.cache.delete(key);
+    }
+    
+    clear() {
+      this.cache.clear();
+    }
+  }
+  
+  // 전역 메모리 캐시 인스턴스
+  const memoryCache = new MemoryCache(200, 60000); // 200개 항목, 1분 TTL
+  
+  // ==========================================
+  // 성능 최적화: 디바운싱 & 쓰로틀링
+  // ==========================================
+  
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+  
+  function throttle(func, limit) {
+    let inThrottle;
+    return function(...args) {
+      if (!inThrottle) {
+        func.apply(this, args);
+        inThrottle = true;
+        setTimeout(() => inThrottle = false, limit);
+      }
+    };
+  }
+  
+  // ==========================================
+  // 성능 최적화: 배치 요청 관리자
+  // ==========================================
+  
+  class BatchRequestManager {
+    constructor(batchDelay = 50) {
+      this.pendingRequests = new Map();
+      this.batchDelay = batchDelay;
+      this.batchTimer = null;
+    }
+    
+    addRequest(key, requestFn) {
+      this.pendingRequests.set(key, requestFn);
+      
+      if (!this.batchTimer) {
+        this.batchTimer = setTimeout(() => {
+          this.executeBatch();
+        }, this.batchDelay);
+      }
+    }
+    
+    async executeBatch() {
+      const requests = Array.from(this.pendingRequests.values());
+      this.pendingRequests.clear();
+      this.batchTimer = null;
+      
+      if (requests.length > 0) {
+        return Promise.all(requests.map(fn => fn()));
+      }
+    }
+  }
+  
+  const batchManager = new BatchRequestManager();
+  
+  // ==========================================
+  // Google Apps Script 비동기 호출 래퍼 (최적화)
+  // ==========================================
+  
+  // 요청 캐싱을 위한 맵
+  const pendingRequests = new Map();
+  
+  function callServer(functionName, ...args) {
+    // 캐시 키 생성
+    const cacheKey = `${functionName}_${JSON.stringify(args)}`;
+    
+    // 메모리 캐시 확인
+    const cached = memoryCache.get(cacheKey);
+    if (cached !== null) {
+      return Promise.resolve(cached);
+    }
+    
+    // 동일한 요청이 진행 중이면 기존 Promise 반환
+    if (pendingRequests.has(cacheKey)) {
+      return pendingRequests.get(cacheKey);
+    }
+    
+    // 새 요청 생성
+    const promise = new Promise((resolve, reject) => {
+      const startTime = performance.now();
+      
+      google.script.run
+        .withSuccessHandler((result) => {
+          const duration = performance.now() - startTime;
+          console.log(`✅ ${functionName} completed in ${duration.toFixed(0)}ms`);
+          
+          // 메모리 캐시에 저장 (1분)
+          memoryCache.set(cacheKey, result, 60000);
+          
+          // 진행 중인 요청 제거
+          pendingRequests.delete(cacheKey);
+          
+          resolve(result);
+        })
+        .withFailureHandler((error) => {
+          console.error(`❌ ${functionName} failed:`, error);
+          pendingRequests.delete(cacheKey);
+          reject(error);
+        })
+        [functionName](...args);
+    });
+    
+    pendingRequests.set(cacheKey, promise);
+    return promise;
+  }
+  
+  // ==========================================
+  // 로딩 UI 관리 (최적화)
+  // ==========================================
+  
+  let loadingCount = 0;
+  
+  function showLoading(message = '처리 중...') {
+    loadingCount++;
+    
+    let overlay = document.getElementById('loadingOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'loadingOverlay';
+      overlay.className = 'loading-overlay fade-in';
+      document.body.appendChild(overlay);
+    }
+    
+    overlay.innerHTML = `
+      <div class="text-center text-white">
+        <div class="spinner-border mb-2" role="status"></div>
+        <div>${escapeHtml(message)}</div>
+      </div>
+    `;
+    overlay.style.display = 'flex';
+  }
+  
+  function hideLoading() {
+    loadingCount = Math.max(0, loadingCount - 1);
+    
+    if (loadingCount === 0) {
+      const overlay = document.getElementById('loadingOverlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+      }
+    }
+  }
+  
+  // ==========================================
+  // 토스트 알림 (최적화)
+  // ==========================================
+  
+  const toastContainer = (function() {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toastContainer';
+      container.className = 'position-fixed top-0 end-0 p-3';
+      container.style.zIndex = '10000';
+      document.body.appendChild(container);
+    }
+    return container;
+  })();
+  
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show shadow-lg`;
+    toast.style.minWidth = '300px';
+    toast.style.maxWidth = '400px';
+    toast.style.marginBottom = '0.5rem';
+    toast.innerHTML = `
+      ${escapeHtml(message)}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // 자동 제거
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+  
+  // ==========================================
+  // XSS 방지 - HTML 이스케이프 (최적화)
+  // ==========================================
+  
+  const escapeHtmlCache = new Map();
+  
+  function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    
+    // 캐시 확인
+    if (escapeHtmlCache.has(text)) {
+      return escapeHtmlCache.get(text);
+    }
+    
+    const div = document.createElement('div');
+    div.textContent = text;
+    const escaped = div.innerHTML;
+    
+    // 캐시 저장 (최대 1000개)
+    if (escapeHtmlCache.size < 1000) {
+      escapeHtmlCache.set(text, escaped);
+    }
+    
+    return escaped;
+  }
+  
+  // ==========================================
+  // 날짜 포맷팅 (최적화)
+  // ==========================================
+  
+  const dateFormatCache = new Map();
+  
+  function formatDate(dateString) {
+    if (!dateString) return '';
+    
+    // 캐시 확인
+    if (dateFormatCache.has(dateString)) {
+      return dateFormatCache.get(dateString);
+    }
+    
+    try {
+      const date = new Date(dateString);
+      const formatted = date.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      // 캐시 저장 (최대 500개)
+      if (dateFormatCache.size < 500) {
+        dateFormatCache.set(dateString, formatted);
+      }
+      
+      return formatted;
+    } catch (e) {
+      return dateString;
+    }
+  }
+  
+  // ==========================================
+  // 파일 업로드 (최적화)
+  // ==========================================
+  
+  async function uploadPhoto(fileInput) {
+    const file = fileInput.files[0];
+    
+    if (!file) {
+      throw new Error('파일을 선택해주세요.');
+    }
+    
+    // 파일 크기 체크 (5MB 제한)
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error('파일 크기는 5MB를 초과할 수 없습니다.');
+    }
+    
+    // 이미지 리사이징 (최적화)
+    const resizedImage = await resizeImage(file, 1920, 1080);
+    
+    // Base64 인코딩
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.error = reject;
+      reader.readAsDataURL(resizedImage);
+    });
+  }
+  
+  // 이미지 리사이징 (Canvas API 활용, 최적화)
+  function resizeImage(file, maxWidth, maxHeight) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // 비율 계산
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        
+        // 이미지 품질 최적화
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // JPEG 품질 85%로 압축
+        canvas.toBlob(resolve, 'image/jpeg', 0.85);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+  
+  // 사진 미리보기 (최적화)
+  function showPhotoPreview(fileInput, previewId) {
+    const file = fileInput.files[0];
+    if (!file) return;
+    
+    const preview = document.getElementById(previewId);
+    if (!preview) return;
+    
+    // 이미지 리사이징 후 미리보기
+    resizeImage(file, 800, 600).then(blob => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(blob);
+    });
+  }
+  
+  // ==========================================
+  // 상태 배지 생성 (최적화)
+  // ==========================================
+  
+  const badgeCache = new Map();
+  
+  function createStatusBadge(status) {
+    if (badgeCache.has(status)) {
+      return badgeCache.get(status);
+    }
+    
+    const badge = `<span class="badge badge-${escapeHtml(status)}">${escapeHtml(status)}</span>`;
+    
+    // 캐시 저장
+    if (badgeCache.size < 100) {
+      badgeCache.set(status, badge);
+    }
+    
+    return badge;
+  }
+  
+  // ==========================================
+  // 에러 처리 (최적화)
+  // ==========================================
+  
+  function handleError(error) {
+    console.error('Error:', error);
+    const message = error.message || '오류가 발생했습니다.';
+    showToast(message, 'danger');
+  }
+  
+  // ==========================================
+  // 세션 관리 (최적화)
+  // ==========================================
+  
+  function getSessionToken() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token') || sessionStorage.getItem('sessionToken');
+    
+    if (token) {
+      sessionStorage.setItem('sessionToken', token);
+    }
+    
+    return token;
+  }
+  
+  // ==========================================
+  // 네비게이션 (최적화)
+  // ==========================================
+  
+  const navigateTo = debounce(async function(page) {
+    try {
+      const sessionToken = getSessionToken();
+      if (!sessionToken) {
+        window.location.href = '?page=login';
+        return;
+      }
+      
+      const baseUrl = await callServer('getWebAppUrl');
+      const targetUrl = baseUrl + '?page=' + page + '&token=' + encodeURIComponent(sessionToken);
+      
+      if (window.top && window.top !== window) {
+        window.top.location.href = targetUrl;
+      } else {
+        window.location.href = targetUrl;
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
+      handleError(error);
+    }
+  }, 300);
+  
+  // ==========================================
+  // 성능 모니터링
+  // ==========================================
+  
+  if (typeof performance !== 'undefined' && performance.mark) {
+    // 페이지 로드 시간 측정
+    window.addEventListener('load', () => {
+      const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+      console.log(`📊 Page load time: ${loadTime}ms`);
+    });
+  }
+  
+  // ==========================================
+  // 메모리 정리 (주기적)
+  // ==========================================
+  
+  setInterval(() => {
+    // 오래된 캐시 정리
+    if (escapeHtmlCache.size > 500) {
+      const keysToDelete = Array.from(escapeHtmlCache.keys()).slice(0, 250);
+      keysToDelete.forEach(key => escapeHtmlCache.delete(key));
+    }
+    
+    if (dateFormatCache.size > 250) {
+      const keysToDelete = Array.from(dateFormatCache.keys()).slice(0, 125);
+      keysToDelete.forEach(key => dateFormatCache.delete(key));
+    }
+  }, 60000); // 1분마다
+  
+  // ==========================================
+  // 전역 에러 핸들러 (Google Apps Script 내부 에러 무시)
+  // ==========================================
+  
+  // document.write 관련 에러 무시 (Google Apps Script 내부 스크립트 로더에서 발생)
+  window.addEventListener('error', function(event) {
+    // Google Apps Script 내부 스크립트 로더에서 발생하는 document.write 에러는 무시
+    if (event.message && event.message.includes("Failed to execute 'write' on 'Document'")) {
+      event.preventDefault();
+      console.warn('Google Apps Script internal script loader error (ignored):', event.message);
+      return false;
+    }
+    // 다른 에러는 정상적으로 처리
+    return true;
+  }, true);
+  
+  // Unhandled promise rejection 처리
+  window.addEventListener('unhandledrejection', function(event) {
+    // Google Apps Script 관련 에러는 무시
+    if (event.reason && typeof event.reason === 'string' && 
+        event.reason.includes("Failed to execute 'write'")) {
+      event.preventDefault();
+      console.warn('Google Apps Script internal error (ignored):', event.reason);
+      return false;
+    }
+    return true;
+  });
+</script>

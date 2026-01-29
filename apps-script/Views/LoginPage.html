@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>부품발주시스템 로그인</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* iframe 환경에서 html, body 직접 타겟팅 */
+    html {
+      font-size: 16px;
+      -webkit-text-size-adjust: 100%;
+    }
+    
+    body {
+      font-size: 1rem;
+    }
+    
+    /* CSS 변수로 동적 크기 제어 */
+    :root {
+      --mobile-font-base: 16px;
+      --mobile-input-height: 44px;
+      --mobile-button-height: 44px;
+    }
+    
+    /* 모바일 가로모드 최적화 */
+    @media screen and (max-width: 768px) and (orientation: landscape) {
+      :root {
+        --mobile-font-base: 20px;
+        --mobile-input-height: 64px;
+        --mobile-button-height: 64px;
+      }
+      
+      html {
+        font-size: 20px !important;
+        -webkit-text-size-adjust: 100% !important;
+        -moz-text-size-adjust: 100% !important;
+        -ms-text-size-adjust: 100% !important;
+        height: auto !important;
+        width: 100% !important;
+      }
+      
+      body {
+        font-size: 1.125rem !important; /* 22.5px */
+        line-height: 1.7 !important;
+        height: auto !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      
+      /* 모든 입력 필드 강제 적용 */
+      input, input.form-control, input#userId, input#password, 
+      input[type="text"], input[type="password"], input[type="email"] {
+        font-size: 20px !important;
+        padding: 1.25rem 1rem !important;
+        min-height: 64px !important;
+        height: 64px !important;
+        line-height: 1.5 !important;
+        border: 3px solid #dee2e6 !important;
+        border-radius: 12px !important;
+        box-sizing: border-box !important;
+      }
+      
+      input:focus, input.form-control:focus, input#userId:focus, input#password:focus,
+      input[type="text"]:focus, input[type="password"]:focus {
+        font-size: 20px !important;
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.25) !important;
+        outline: none !important;
+      }
+      
+      /* 모든 버튼 강제 적용 */
+      button, button.google-btn, button[type="submit"], .btn, #loginBtn {
+        font-size: 1.375rem !important; /* 27.5px */
+        padding: 1.25rem !important;
+        min-height: 64px !important;
+        height: 64px !important;
+        font-weight: 700 !important;
+        border-radius: 12px !important;
+        box-sizing: border-box !important;
+      }
+      
+      /* 모든 라벨 강제 적용 */
+      label, label.form-label, label[for="userId"], label[for="password"] {
+        font-size: 1.25rem !important; /* 25px */
+        margin-bottom: 1rem !important;
+        font-weight: 700 !important;
+      }
+      
+      /* 제목 강제 적용 */
+      .login-header h2 {
+        font-size: 2.25rem !important; /* 45px */
+        margin-bottom: 1.5rem !important;
+      }
+      
+      .login-header p {
+        font-size: 1.25rem !important; /* 25px */
+      }
+      
+      /* 본문 텍스트 */
+      p, span, div {
+        font-size: 1.125rem !important; /* 22.5px */
+      }
+      
+      .info-box {
+        padding: 1.75rem 1.5rem !important;
+        font-size: 1.125rem !important;
+      }
+      
+      .info-box p {
+        font-size: 1.125rem !important;
+        line-height: 1.8 !important;
+        margin-bottom: 1rem !important;
+      }
+      
+      /* 로그인 컨테이너 */
+      .login-container {
+        padding: 2.5rem 2rem !important;
+        margin: 1rem !important;
+        border-radius: 20px !important;
+        max-width: 100% !important;
+        width: calc(100% - 2rem) !important;
+      }
+    }
+    
+    /* 모바일 세로모드 즉시 적용 - Bootstrap 오버라이드 - 최우선 */
+    @media screen and (max-width: 768px) and (orientation: portrait) {
+      :root {
+        --mobile-font-base: 24px;
+        --mobile-input-height: 80px;
+        --mobile-button-height: 80px;
+      }
+      
+      html {
+        font-size: 24px !important;
+        -webkit-text-size-adjust: 100% !important;
+        -moz-text-size-adjust: 100% !important;
+        -ms-text-size-adjust: 100% !important;
+        height: auto !important;
+        width: 100% !important;
+      }
+      
+      body {
+        font-size: 1.25rem !important; /* 30px */
+        line-height: 1.8 !important;
+        height: auto !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      
+      /* 모든 입력 필드 강제 적용 */
+      input, input.form-control, input#userId, input#password, 
+      input[type="text"], input[type="password"], input[type="email"] {
+        font-size: var(--mobile-font-base) !important;
+        padding: 1.75rem 1.5rem !important;
+        min-height: var(--mobile-input-height) !important;
+        height: var(--mobile-input-height) !important;
+        line-height: 1.5 !important;
+        border: 3px solid #dee2e6 !important;
+        border-radius: 14px !important;
+        box-sizing: border-box !important;
+      }
+      
+      /* 모든 버튼 강제 적용 */
+      button, button.google-btn, button[type="submit"], .btn, #loginBtn {
+        font-size: 1.75rem !important;
+        padding: 1.75rem !important;
+        min-height: var(--mobile-button-height) !important;
+        height: var(--mobile-button-height) !important;
+        font-weight: 700 !important;
+        border-radius: 14px !important;
+        box-sizing: border-box !important;
+      }
+      
+      /* 모든 라벨 강제 적용 */
+      label, label.form-label, label[for="userId"], label[for="password"] {
+        font-size: 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+        font-weight: 700 !important;
+      }
+      
+      /* 제목 강제 적용 */
+      .login-header h2 {
+        font-size: 3rem !important;
+        margin-bottom: 2rem !important;
+      }
+      
+      .login-header p {
+        font-size: 1.5rem !important;
+      }
+      
+      /* 본문 텍스트 */
+      p, span, div {
+        font-size: 1.375rem !important;
+      }
+      
+      .info-box {
+        padding: 2.5rem 2rem !important;
+        font-size: 1.375rem !important;
+      }
+      
+      .info-box p {
+        font-size: 1.375rem !important;
+        line-height: 1.9 !important;
+        margin-bottom: 1.25rem !important;
+      }
+      
+      /* 입력 필드 포커스 스타일 */
+      input:focus, input.form-control:focus, input#userId:focus, input#password:focus,
+      input[type="text"]:focus, input[type="password"]:focus {
+        font-size: var(--mobile-font-base) !important;
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.35rem rgba(102, 126, 234, 0.25) !important;
+        outline: none !important;
+      }
+      
+      /* 로그인 컨테이너 */
+      .login-container {
+        padding: 3.5rem 2.5rem !important;
+        margin: 1.5rem !important;
+        border-radius: 24px !important;
+        max-width: 100% !important;
+        width: calc(100% - 3rem) !important;
+      }
+    }
+    
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .login-container {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      padding: 2rem;
+      width: 100%;
+      max-width: 800px;
+      margin: 1rem;
+    }
+    
+    /* 세로모드 전용 스타일 */
+    @media (max-width: 768px) and (orientation: portrait) {
+      body {
+        padding: 0 !important;
+        align-items: center !important;
+        padding-top: 0 !important;
+        min-height: 100vh !important;
+      }
+      .login-container {
+        padding: 3.5rem 2.5rem !important;
+        margin: 1.5rem !important;
+        border-radius: 24px !important;
+        max-width: 100% !important;
+        width: calc(100% - 3rem) !important;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
+      }
+      .login-header {
+        margin-bottom: 3.5rem !important;
+      }
+      .login-header h2 {
+        font-size: clamp(2.5rem, 12vw, 3.5rem) !important; /* 50px ~ 70px */
+        font-weight: 700 !important;
+        margin-bottom: 2rem !important;
+        color: #1a1a1a !important;
+      }
+      .login-header p {
+        font-size: clamp(1.375rem, 5vw, 1.625rem) !important; /* 27.5px ~ 32.5px */
+        color: #666 !important;
+        line-height: 1.8 !important;
+      }
+      .form-label {
+        font-size: clamp(1.5rem, 6vw, 1.75rem) !important; /* 30px ~ 35px */
+        font-weight: 700 !important;
+        margin-bottom: 1.25rem !important;
+        color: #333 !important;
+      }
+      .form-control {
+        font-size: 22px !important; /* iOS 줌 방지 + 가독성 */
+        padding: 1.75rem 1.5rem !important;
+        min-height: 72px !important;
+        border-radius: 14px !important;
+        border: 3px solid #dee2e6 !important;
+        font-weight: 500 !important;
+      }
+      .form-control:focus {
+        font-size: 22px !important;
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.35rem rgba(102, 126, 234, 0.25) !important;
+        outline: none !important;
+      }
+      .google-btn {
+        font-size: clamp(1.5rem, 7vw, 1.875rem) !important; /* 30px ~ 37.5px */
+        padding: 1.75rem !important;
+        min-height: 72px !important;
+        border-radius: 14px !important;
+        font-weight: 700 !important;
+        margin-top: 2.5rem !important;
+        letter-spacing: 0.5px !important;
+      }
+      .info-box {
+        margin-top: 3.5rem !important;
+        padding: 2.5rem 2rem !important;
+        border-radius: 14px !important;
+        border-left-width: 6px !important;
+      }
+      .info-box p {
+        font-size: clamp(1.25rem, 4vw, 1.5rem) !important; /* 25px ~ 30px */
+        line-height: 1.9 !important;
+        margin-bottom: 1.25rem !important;
+        color: #555 !important;
+      }
+      .info-box p:last-child {
+        margin-bottom: 0 !important;
+      }
+      .info-box p strong {
+        font-size: clamp(1.375rem, 5vw, 1.625rem) !important;
+        color: #333 !important;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        padding: 0 !important;
+        align-items: center !important;
+        padding-top: 0 !important;
+        min-height: 100vh !important;
+      }
+      .login-container {
+        padding: 3rem 2.5rem !important;
+        margin: 1.5rem !important;
+        border-radius: 20px !important;
+        max-width: 100% !important;
+        width: calc(100% - 3rem) !important;
+        box-shadow: 0 16px 48px rgba(0,0,0,0.3) !important;
+      }
+      .login-header {
+        margin-bottom: 3rem !important;
+      }
+      .login-header h2 {
+        font-size: clamp(2rem, 10vw, 2.75rem) !important; /* 40px ~ 55px */
+        font-weight: 700 !important;
+        margin-bottom: 1.5rem !important;
+        color: #1a1a1a !important;
+      }
+      .login-header p {
+        font-size: clamp(1.125rem, 4vw, 1.375rem) !important; /* 22.5px ~ 27.5px */
+        color: #666 !important;
+        line-height: 1.7 !important;
+      }
+      .form-label {
+        font-size: clamp(1.25rem, 5vw, 1.5rem) !important; /* 25px ~ 30px */
+        font-weight: 700 !important;
+        margin-bottom: 1rem !important;
+        color: #333 !important;
+      }
+      .form-control {
+        font-size: 20px !important; /* iOS 줌 방지 + 가독성 */
+        padding: 1.5rem 1.25rem !important;
+        min-height: 64px !important;
+        border-radius: 12px !important;
+        border: 3px solid #dee2e6 !important;
+        font-weight: 500 !important;
+      }
+      .form-control:focus {
+        font-size: 20px !important;
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.25) !important;
+        outline: none !important;
+      }
+      .google-btn {
+        font-size: clamp(1.375rem, 6vw, 1.625rem) !important; /* 27.5px ~ 32.5px */
+        padding: 1.5rem !important;
+        min-height: 64px !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        margin-top: 2rem !important;
+        letter-spacing: 0.5px !important;
+      }
+      .info-box {
+        margin-top: 3rem !important;
+        padding: 2rem 1.75rem !important;
+        border-radius: 12px !important;
+        border-left-width: 6px !important;
+      }
+      .info-box p {
+        font-size: clamp(1.0625rem, 3.5vw, 1.25rem) !important; /* 21.25px ~ 25px */
+        line-height: 1.8 !important;
+        margin-bottom: 1rem !important;
+        color: #555 !important;
+      }
+      .info-box p:last-child {
+        margin-bottom: 0 !important;
+      }
+      .info-box p strong {
+        font-size: clamp(1.125rem, 4vw, 1.375rem) !important;
+        color: #333 !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 2rem 1.5rem;
+        margin: 0.75rem;
+        border-radius: 14px;
+      }
+      .login-header h2 {
+        font-size: 1.75rem;
+      }
+      .form-control {
+        font-size: 17px;
+        padding: 1.125rem 0.875rem;
+        min-height: 52px;
+      }
+      .google-btn {
+        font-size: 1.125rem;
+        padding: 1.125rem;
+        min-height: 52px;
+      }
+    }
+    
+    @media (max-width: 320px) {
+      .login-container {
+        padding: 1.75rem 1.25rem;
+        margin: 0.5rem;
+      }
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .login-header h2 {
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+    .login-header p {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .google-btn {
+      width: 100%;
+      background-color: #4285F4;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .google-btn:hover {
+      background-color: #357ae8;
+    }
+    .google-btn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    .info-box {
+      background-color: #f8f9fa;
+      border-left: 4px solid #4285F4;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      border-radius: 4px;
+    }
+    .info-box p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: #666;
+    }
+    .spinner-border-sm {
+      width: 1rem;
+      height: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-header">
+      <h2>부품발주시스템</h2>
+      <p>사용자 ID와 비밀번호를 입력하세요</p>
+    </div>
+    
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="mb-3">
+        <label for="userId" class="form-label">사용자 ID</label>
+        <input type="text" class="form-control" id="userId" required>
+      </div>
+      
+      <div class="mb-3">
+        <label for="password" class="form-label">비밀번호</label>
+        <input type="password" class="form-control" id="password" required>
+      </div>
+      
+      <div class="mb-3">
+        <button type="submit" id="loginBtn" class="google-btn" style="width: 100%;">
+          로그인
+        </button>
+      </div>
+    </form>
+    
+    <div class="info-box">
+      <p><strong>안내사항</strong></p>
+      <p>• 시스템에 등록된 사용자만 접근 가능합니다</p>
+      <p>• 비밀번호는 대소문자를 구분합니다</p>
+      <p>• 접근 권한이 필요한 경우 관리자에게 문의하세요</p>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <?!= include('JavaScript'); ?>
+  <script>
+    // 모바일 세로모드 스타일 강제 적용 - 최우선 실행
+    (function() {
+      function getViewportSize() {
+        // iframe 환경에서 정확한 뷰포트 크기 가져오기
+        // visualViewport API 사용 (가장 정확 - iframe 환경에서도 작동)
+        if (window.visualViewport) {
+          return {
+            width: window.visualViewport.width,
+            height: window.visualViewport.height
+          };
+        }
+        
+        // fallback: 여러 소스에서 최대값 사용
+        const width = Math.max(
+          window.innerWidth || 0,
+          document.documentElement.clientWidth || 0,
+          document.body.clientWidth || 0
+        );
+        const height = Math.max(
+          window.innerHeight || 0,
+          document.documentElement.clientHeight || 0,
+          document.body.clientHeight || 0
+        );
+        return { width, height };
+      }
+      
+      function isMobilePortrait() {
+        const viewport = getViewportSize();
+        const isMobile = viewport.width <= 768;
+        const isPortrait = viewport.height > viewport.width;
+        
+        // 디버깅용 로그
+        console.log('Viewport check:', {
+          width: viewport.width,
+          height: viewport.height,
+          isMobile: isMobile,
+          isPortrait: isPortrait,
+          innerWidth: window.innerWidth,
+          innerHeight: window.innerHeight,
+          clientWidth: document.documentElement.clientWidth,
+          clientHeight: document.documentElement.clientHeight,
+          visualViewport: window.visualViewport ? {
+            width: window.visualViewport.width,
+            height: window.visualViewport.height
+          } : 'not available'
+        });
+        
+        return isMobile && isPortrait;
+      }
+      
+      function applyMobileStyles() {
+        const viewport = getViewportSize();
+        
+        // 여러 방법으로 모바일 감지
+        const width1 = viewport.width;
+        const width2 = window.innerWidth;
+        const width3 = document.documentElement.clientWidth;
+        const width4 = screen.width;
+        const minWidth = Math.min(width1, width2, width3, width4);
+        const maxWidth = Math.max(width1, width2, width3, width4);
+        
+        // 조건을 매우 넓게 설정: 1200px 이하이면 모바일로 간주 (태블릿 포함)
+        // 또는 세로모드면 무조건 적용
+        const isPortrait = viewport.height > viewport.width;
+        const isMobile = minWidth <= 1200 || isPortrait;
+        const shouldApply = isMobile;
+        
+        // 디버깅 로그는 첫 실행 시에만 출력
+        if (!window._mobileStylesLogShown) {
+          console.log('Mobile check:', {
+            viewport: viewport,
+            widths: { width1, width2, width3, width4, minWidth, maxWidth },
+            isMobile: isMobile,
+            isPortrait: isPortrait,
+            shouldApply: shouldApply
+          });
+          window._mobileStylesLogShown = true;
+        }
+        
+        if (!shouldApply) {
+          return;
+        }
+        
+        const html = document.documentElement;
+        const body = document.body;
+        
+        // 세로모드와 가로모드에 따라 다른 크기 설정
+        const isPortraitMode = isPortrait;
+        if (isPortraitMode) {
+          // 세로모드: 큰 크기
+          html.style.cssText = 'font-size: 24px !important; -webkit-text-size-adjust: 100% !important; height: auto !important; width: 100% !important;';
+          body.style.cssText = 'font-size: 1.25rem !important; line-height: 1.8 !important; height: auto !important; width: 100% !important; margin: 0 !important; padding: 0 !important;';
+          
+          // 입력 필드 (세로모드)
+          const inputs = document.querySelectorAll('input, input.form-control, input#userId, input#password, input[type="text"], input[type="password"], input[type="email"]');
+          inputs.forEach(input => {
+            const currentHeight = input.offsetHeight;
+            const currentFontSize = parseFloat(getComputedStyle(input).fontSize);
+            if (currentHeight < 70 || currentFontSize < 20) {
+              input.style.cssText = 'font-size: 24px !important; padding: 1.75rem 1.5rem !important; min-height: 80px !important; height: 80px !important; line-height: 1.5 !important; border: 3px solid #dee2e6 !important; border-radius: 14px !important; box-sizing: border-box !important;';
+            }
+          });
+          
+          // 버튼 (세로모드)
+          const buttons = document.querySelectorAll('button, button.google-btn, button[type="submit"], .btn, #loginBtn');
+          buttons.forEach(button => {
+            const currentHeight = button.offsetHeight;
+            const currentFontSize = parseFloat(getComputedStyle(button).fontSize);
+            if (currentHeight < 70 || currentFontSize < 20) {
+              const existingWidth = button.style.width;
+              button.style.cssText = 'font-size: 1.75rem !important; padding: 1.75rem !important; min-height: 80px !important; height: 80px !important; font-weight: 700 !important; border-radius: 14px !important; box-sizing: border-box !important;';
+              if (existingWidth) {
+                button.style.width = existingWidth;
+              }
+            }
+          });
+        } else {
+          // 가로모드: 중간 크기
+          html.style.cssText = 'font-size: 20px !important; -webkit-text-size-adjust: 100% !important; height: auto !important; width: 100% !important;';
+          body.style.cssText = 'font-size: 1.125rem !important; line-height: 1.7 !important; height: auto !important; width: 100% !important; margin: 0 !important; padding: 0 !important;';
+          
+          // 입력 필드 (가로모드)
+          const inputs = document.querySelectorAll('input, input.form-control, input#userId, input#password, input[type="text"], input[type="password"], input[type="email"]');
+          inputs.forEach(input => {
+            const currentHeight = input.offsetHeight;
+            const currentFontSize = parseFloat(getComputedStyle(input).fontSize);
+            if (currentHeight < 55 || currentFontSize < 18) {
+              input.style.cssText = 'font-size: 20px !important; padding: 1.25rem 1rem !important; min-height: 64px !important; height: 64px !important; line-height: 1.5 !important; border: 3px solid #dee2e6 !important; border-radius: 12px !important; box-sizing: border-box !important;';
+            }
+          });
+          
+          // 버튼 (가로모드)
+          const buttons = document.querySelectorAll('button, button.google-btn, button[type="submit"], .btn, #loginBtn');
+          buttons.forEach(button => {
+            const currentHeight = button.offsetHeight;
+            const currentFontSize = parseFloat(getComputedStyle(button).fontSize);
+            if (currentHeight < 55 || currentFontSize < 18) {
+              const existingWidth = button.style.width;
+              button.style.cssText = 'font-size: 1.375rem !important; padding: 1.25rem !important; min-height: 64px !important; height: 64px !important; font-weight: 700 !important; border-radius: 12px !important; box-sizing: border-box !important;';
+              if (existingWidth) {
+                button.style.width = existingWidth;
+              }
+            }
+          });
+        }
+        
+        // 모든 라벨에 스타일 적용
+        const labels = document.querySelectorAll('label, label.form-label, label[for="userId"], label[for="password"]');
+        labels.forEach(label => {
+          if (isPortraitMode) {
+            label.style.setProperty('font-size', '1.5rem', 'important');
+            label.style.setProperty('margin-bottom', '1.5rem', 'important');
+          } else {
+            label.style.setProperty('font-size', '1.25rem', 'important');
+            label.style.setProperty('margin-bottom', '1rem', 'important');
+          }
+          label.style.setProperty('font-weight', '700', 'important');
+        });
+        
+        // 제목 스타일 적용
+        const h2 = document.querySelector('.login-header h2');
+        if (h2) {
+          h2.style.setProperty('font-size', isPortraitMode ? '3rem' : '2.25rem', 'important');
+        }
+        
+        const p = document.querySelector('.login-header p');
+        if (p) {
+          p.style.setProperty('font-size', isPortraitMode ? '1.5rem' : '1.25rem', 'important');
+        }
+      }
+      
+      // 즉시 실행 (스크립트가 head에 있을 때를 대비)
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+          setTimeout(applyMobileStyles, 0);
+        });
+      } else {
+        setTimeout(applyMobileStyles, 0);
+      }
+      
+      // MutationObserver 비활성화 (무한 루프 방지)
+      // MutationObserver는 스타일 변경을 감지하면 다시 스타일을 적용하고, 
+      // 이것이 다시 변경을 감지하는 무한 루프를 만들 수 있음
+      
+      // 이벤트 리스너 등록 (throttle 적용)
+      let resizeTimeout;
+      window.addEventListener('load', applyMobileStyles);
+      window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(applyMobileStyles, 500);
+      });
+      window.addEventListener('orientationchange', function() {
+        setTimeout(applyMobileStyles, 500);
+      });
+      
+      // 주기적으로 체크 (최대 5번만 체크 후 중지)
+      let checkCount = 0;
+      const maxChecks = 5;
+      const intervalId = setInterval(function() {
+        checkCount++;
+        if (checkCount > maxChecks) {
+          clearInterval(intervalId);
+          return;
+        }
+        const viewport = getViewportSize();
+        const isMobile = Math.min(viewport.width, window.innerWidth || 9999, document.documentElement.clientWidth || 9999) <= 1200;
+        if (isMobile) {
+          applyMobileStyles();
+        }
+      }, 2000);
+    })();
+    
+    // 페이지 로드 시 사용자 ID 입력 필드에 포커스 설정
+    (function() {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+          setTimeout(function() {
+            const userIdInput = document.getElementById('userId');
+            if (userIdInput && !userIdInput.disabled) {
+              userIdInput.focus();
+            }
+          }, 100);
+        });
+      } else {
+        setTimeout(function() {
+          const userIdInput = document.getElementById('userId');
+          if (userIdInput && !userIdInput.disabled) {
+            userIdInput.focus();
+          }
+        }, 100);
+      }
+    })();
+    
+    // XSS 방지 - HTML 이스케이프 (JavaScript.html에 있지만 중복 정의)
+    if (typeof escapeHtml === 'undefined') {
+      function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+    }
+    // 로그인 폼 제출
+    function handleLogin(event) {
+      event.preventDefault();
+      
+      const userId = document.getElementById('userId').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('loginBtn');
+      
+      if (!userId || !password) {
+        showMessage('사용자 ID와 비밀번호를 입력해주세요.', 'warning');
+        return;
+      }
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>로그인 중...';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            // 로그인 성공
+            // 이전 로그인(관리자/사용자)에서 남아있는 캐시로 역할이 뒤섞이는 문제 방지
+            // 세션 관련 데이터 모두 정리
+            sessionStorage.removeItem('currentUser');
+            sessionStorage.removeItem('pendingRequestNo');
+            sessionStorage.removeItem('pendingPage');
+            sessionStorage.removeItem('adminStatusFilter');
+            // 새 세션 토큰 저장
+            sessionStorage.setItem('sessionToken', result.sessionToken);
+            
+            // 토큰 검증
+            if (!result.sessionToken || result.sessionToken === 'YOUR_TOKEN' || result.sessionToken.length < 10) {
+              console.error('Invalid session token:', result.sessionToken);
+              showMessage('세션 토큰이 올바르지 않습니다. 다시 로그인해주세요.', 'danger');
+              btn.disabled = false;
+              btn.innerHTML = '로그인';
+              return;
+            }
+            
+            // 페이지 결정
+            const page = result.user.role === '관리자' ? 'admin-dashboard' : 'dashboard';
+            
+            // 서버에서 웹 앱 URL 가져와서 리다이렉트
+            google.script.run
+              .withSuccessHandler(function(webAppUrl) {
+                console.log('Received web app URL:', webAppUrl);
+                
+                let baseUrl = '';
+                
+                // 서버에서 받은 URL이 유효하면 사용
+                if (webAppUrl && webAppUrl.trim() !== '') {
+                  // /exec로 끝나는지 확인
+                  if (webAppUrl.includes('/exec')) {
+                    baseUrl = webAppUrl.split('?')[0]; // 쿼리 파라미터 제거
+                  } else {
+                    baseUrl = webAppUrl;
+                  }
+                }
+                
+                // baseUrl이 없으면 현재 URL에서 추출
+                if (!baseUrl) {
+                  const currentUrl = window.location.href;
+                  console.log('Current URL:', currentUrl);
+                  
+                  if (currentUrl.includes('/exec')) {
+                    baseUrl = currentUrl.split('/exec')[0] + '/exec';
+                  } else {
+                    // 스크립트 ID 추출 시도
+                    try {
+                      // URL 형식: https://script.google.com/... 또는 https://...googleusercontent.com/...
+                      const scriptIdMatch = currentUrl.match(/\/macros\/s\/([^\/]+)\//);
+                      if (scriptIdMatch && scriptIdMatch[1]) {
+                        baseUrl = 'https://script.google.com/macros/s/' + scriptIdMatch[1] + '/exec';
+                      } else {
+                        // 폴백: 현재 origin + pathname
+                        const urlObj = new URL(currentUrl);
+                        baseUrl = urlObj.origin + urlObj.pathname.split('?')[0];
+                      }
+                    } catch (e) {
+                      console.error('Failed to parse URL:', e);
+                      showMessage('URL 파싱 오류가 발생했습니다.', 'danger');
+                      btn.disabled = false;
+                      btn.innerHTML = '로그인';
+                      return;
+                    }
+                  }
+                }
+                
+                console.log('Base URL:', baseUrl);
+                
+                // 최종 리다이렉트 URL 구성
+                const finalUrl = baseUrl + '?page=' + page + '&token=' + encodeURIComponent(result.sessionToken);
+                console.log('Login successful, redirecting to:', finalUrl);
+                console.log('User role:', result.user.role);
+                
+                // 사용자 제스처와 직접 연결된 리다이렉트를 위해 성공 모달 표시
+                showSuccessModalWithRedirect('로그인 성공!', '대시보드로 이동합니다.', finalUrl);
+              })
+              .withFailureHandler(function(error) {
+                console.error('Failed to get web app URL:', error);
+                
+                // 폴백: 현재 URL에서 추출
+                const currentUrl = window.location.href;
+                let baseUrl = '';
+                
+                if (currentUrl.includes('/exec')) {
+                  baseUrl = currentUrl.split('/exec')[0] + '/exec';
+                } else {
+                  // 스크립트 ID 추출 시도
+                  try {
+                    const scriptIdMatch = currentUrl.match(/\/macros\/s\/([^\/]+)\//);
+                    if (scriptIdMatch && scriptIdMatch[1]) {
+                      baseUrl = 'https://script.google.com/macros/s/' + scriptIdMatch[1] + '/exec';
+                    } else {
+                      showMessage('웹 앱 URL을 찾을 수 없습니다.', 'danger');
+                      btn.disabled = false;
+                      btn.innerHTML = '로그인';
+                      return;
+                    }
+                  } catch (e) {
+                    console.error('Failed to parse URL:', e);
+                    showMessage('URL 파싱 오류가 발생했습니다.', 'danger');
+                    btn.disabled = false;
+                    btn.innerHTML = '로그인';
+                    return;
+                  }
+                }
+                
+                const finalUrl = baseUrl + '?page=' + page + '&token=' + encodeURIComponent(result.sessionToken);
+                console.log('Using fallback URL:', finalUrl);
+                
+                // 사용자 제스처와 직접 연결된 리다이렉트를 위해 성공 모달 표시
+                btn.disabled = false;
+                btn.innerHTML = '로그인';
+                showSuccessModalWithRedirect('로그인 성공!', '대시보드로 이동합니다.', finalUrl);
+              })
+              .getWebAppUrl();
+          } else {
+            // 로그인 실패
+            btn.disabled = false;
+            btn.innerHTML = '로그인';
+            showMessage(result.message || '로그인에 실패했습니다.', 'danger');
+          }
+        })
+        .withFailureHandler(function(error) {
+          btn.disabled = false;
+          btn.innerHTML = '로그인';
+          const errorMsg = error.message || error.toString() || '로그인 중 오류가 발생했습니다.';
+          showMessage(errorMsg, 'danger');
+          console.error('Login error:', error);
+        })
+        .login(userId, password);
+    }
+    
+    // 메시지 표시
+    // 성공 모달과 함께 리다이렉트 (사용자 제스처와 직접 연결)
+    function showSuccessModalWithRedirect(title, message, redirectUrl) {
+      const modal = document.createElement('div');
+      modal.className = 'modal fade show';
+      modal.style.display = 'block';
+      modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+      modal.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+              <h5 class="modal-title">${title}</h5>
+            </div>
+            <div class="modal-body">
+              <p>${message}</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-success" onclick="redirectToDashboard('${redirectUrl}')">
+                대시보드로 이동
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+    
+    // 사용자 제스처와 직접 연결된 리다이렉트 함수
+    function redirectToDashboard(url) {
+      try {
+        if (window.top && window.top !== window) {
+          window.top.location.href = url;
+        } else {
+          window.location.href = url;
+        }
+      } catch (e) {
+        console.error('Failed to redirect:', e);
+        window.location.href = url;
+      }
+    }
+    
+    function showMessage(message, type) {
+      // 기존 메시지 제거
+      const existing = document.querySelector('.alert-message');
+      if (existing) existing.remove();
+      
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `alert alert-${type} alert-dismissible fade show mt-3 alert-message`;
+      messageDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      document.querySelector('.login-container').insertBefore(
+        messageDiv,
+        document.querySelector('.info-box')
+      );
+    }
+    
+    // URL 파라미터로 에러 메시지 확인
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    if (error) {
+      showMessage('로그인에 실패했습니다: ' + decodeURIComponent(error), 'danger');
+    }
+  </script>
+</body>
+</html>
+

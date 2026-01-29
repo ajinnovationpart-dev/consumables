@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>부품 발주 관리</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* 관리자 페이지는 PC 전용 스타일 적용 */
+    body {
+      font-size: 14px !important;
+    }
+    
+    .container-fluid {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    /* 모바일 스타일 제거 */
+    @media (max-width: 768px) {
+      body {
+        font-size: 14px !important;
+      }
+      
+      input, .form-control, .form-select, textarea {
+        font-size: 14px !important;
+        min-height: auto !important;
+        padding: 0.375rem 0.75rem !important;
+      }
+      
+      button, .btn {
+        font-size: 14px !important;
+        min-height: auto !important;
+        padding: 0.375rem 0.75rem !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 헤더 -->
+  <nav class="navbar navbar-dark bg-primary mb-3">
+    <div class="container-fluid px-2">
+      <span class="navbar-brand mb-0">🏠 부품발주 (관리자)</span>
+      <div class="d-flex align-items-center">
+        <span class="text-white d-none d-md-inline me-2 small">
+          👤 <span id="headerUserName"></span>
+        </span>
+        <button class="btn btn-sm btn-outline-light" onclick="goBack()">← 뒤로</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid px-2 mt-2">
+    <h2 class="h4 mb-3">📋 전체 신청 목록</h2>
+    
+    <!-- 필터 -->
+    <div class="filter-section mb-3">
+      <div class="row g-2">
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label small">상태</label>
+          <select class="form-select" id="filterStatus">
+            <option value="">전체 상태</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label small">지역</label>
+          <select class="form-select" id="filterRegion">
+            <option value="">전체 지역</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label small">시작일</label>
+          <input type="date" class="form-control" id="filterDateFrom">
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="form-label small">종료일</label>
+          <input type="date" class="form-control" id="filterDateTo">
+        </div>
+        <div class="col-md-12">
+          <button class="btn btn-primary" onclick="applyFilter()">필터 적용</button>
+          <button class="btn btn-secondary" onclick="resetFilter()">초기화</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 신청 목록 -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">신청 목록</h5>
+        <div>
+          <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+          <label for="selectAll" class="ms-2">전체 선택</label>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover" id="adminRequestsTable">
+            <thead>
+              <tr>
+                <th width="50"><input type="checkbox" id="selectAllHeader" onchange="toggleSelectAll()"></th>
+                <th>신청번호</th>
+                <th>상태</th>
+                <th>신청일</th>
+                <th>신청자</th>
+                <th>지역</th>
+                <th>품명</th>
+                <th>수량</th>
+                <th>관리번호</th>
+                <th>담당자</th>
+                <th>사진</th>
+                <th>액션</th>
+              </tr>
+            </thead>
+            <tbody id="adminRequestsBody">
+              <tr>
+                <td colspan="12" class="text-center">로딩 중...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- 페이징 -->
+        <nav>
+          <ul class="pagination justify-content-center" id="pagination">
+          </ul>
+        </nav>
+      </div>
+    </div>
+    
+    <!-- 일괄 작업 버튼 (고정 하단) -->
+    <div class="fixed-bottom-actions">
+      <div class="container-fluid">
+        <div class="d-flex gap-2">
+          <button class="btn btn-info" onclick="bulkAssign()">담당자 배정</button>
+          <button class="btn btn-warning" onclick="bulkUpdateStatus('접수중')">접수중</button>
+          <button class="btn btn-info" onclick="bulkUpdateStatus('발주진행')">발주진행</button>
+          <button class="btn btn-success" onclick="bulkUpdateStatus('발주완료(납기확인)')">발주완료(납기확인)</button>
+          <button class="btn btn-primary" onclick="bulkUpdateStatus('발주완료(납기미정)')">발주완료(납기미정)</button>
+          <button class="btn btn-success" onclick="bulkUpdateStatus('처리완료')">처리완료</button>
+          <button class="btn btn-secondary" onclick="bulkUpdateStatus('접수취소')">접수취소</button>
+          <button class="btn btn-danger" onclick="bulkCancel()">취소</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 상세 모달 -->
+  <div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">신청 상세</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="detailModalBody">
+          로딩 중...
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <?!= include('JavaScript'); ?>
+  <script>
+    // 전역 에러 핸들러 - 빈 페이지 방지
+    window.addEventListener('error', function(e) {
+      console.error('Global error caught:', e.error || e.message);
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'alert alert-danger m-4';
+      errorDiv.style.position = 'fixed';
+      errorDiv.style.top = '20px';
+      errorDiv.style.left = '50%';
+      errorDiv.style.transform = 'translateX(-50%)';
+      errorDiv.style.zIndex = '9999';
+      errorDiv.style.maxWidth = '600px';
+      errorDiv.innerHTML = `
+        <h5>⚠️ 페이지 로딩 오류</h5>
+        <p><strong>오류:</strong> ${e.message || '알 수 없는 오류'}</p>
+        <button class="btn btn-primary btn-sm" onclick="window.location.reload()">새로고침</button>
+        <button class="btn btn-secondary btn-sm" onclick="window.location.href='?page=admin-dashboard'">대시보드</button>
+      `;
+      document.body.appendChild(errorDiv);
+    });
+
+    // 세션 토큰 가져오기
+    function getSessionToken() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('token') || sessionStorage.getItem('sessionToken');
+    }
+    let allRequests = [];
+    let currentFilter = {};
+    let currentPage = 1;
+    const itemsPerPage = 20; // 페이지당 항목 수
+    
+    // 페이지 로드 시 초기화
+    window.onload = async function() {
+      try {
+        const startTime = performance.now();
+        console.log('AdminPage: Initializing...');
+        const sessionToken = getSessionToken();
+        console.log('Session token:', sessionToken ? 'Present' : 'Missing');
+        
+        if (!sessionToken) {
+          console.warn('No session token, redirecting to login');
+          window.location.href = '?page=login';
+          return;
+        }
+
+        showLoading('데이터를 불러오는 중...');
+        
+        // 사용자 정보 확인
+        console.log('Checking user role...');
+        const user = await callServer('getCurrentUser', sessionToken);
+        console.log('Current user:', user);
+        
+        if (!user || user.role !== '관리자') {
+          console.warn('Not admin or no user, redirecting to login');
+          hideLoading();
+          window.location.href = '?page=login';
+          return;
+        }
+        
+        // 헤더에 사용자 이름 표시
+        if (document.getElementById('headerUserName')) {
+          document.getElementById('headerUserName').textContent = user.name || '관리자';
+        }
+        
+        // 코드 목록 로드
+        console.log('Loading code list...');
+        const codes = await callServer('getCodeList');
+        console.log('Codes:', codes);
+        
+        if (codes) {
+          // 상태 필터
+          const statusSelect = document.getElementById('filterStatus');
+          if (codes.statuses && Array.isArray(codes.statuses)) {
+            console.log('Adding status options:', codes.statuses.length);
+            codes.statuses.forEach(status => {
+              const option = document.createElement('option');
+              option.value = status.name;
+              option.textContent = status.name;
+              statusSelect.appendChild(option);
+            });
+          }
+          
+          // 지역 필터
+          const regionSelect = document.getElementById('filterRegion');
+          if (codes.regions && Array.isArray(codes.regions)) {
+            console.log('Adding region options:', codes.regions.length);
+            codes.regions.forEach(region => {
+              const option = document.createElement('option');
+              option.value = region.name;
+              option.textContent = region.name;
+              regionSelect.appendChild(option);
+            });
+          }
+        }
+        
+        // 대시보드에서 상태 필터가 전달된 경우 적용 (URL 파라미터 우선)
+        const urlParams = new URLSearchParams(window.location.search);
+        let statusFilter = urlParams.get('status') || sessionStorage.getItem('adminStatusFilter');
+        
+        if (statusFilter) {
+          document.getElementById('filterStatus').value = statusFilter;
+          sessionStorage.removeItem('adminStatusFilter');
+          // 필터가 설정된 경우 자동으로 적용
+          await loadAllRequests({ status: statusFilter });
+        } else {
+          // 신청 목록 로드        
+          await loadAllRequests();
+        }
+        
+        hideLoading();
+        
+        const loadTime = (performance.now() - startTime).toFixed(0);
+        console.log(`✅ AdminPage loaded in ${loadTime}ms`);
+      } catch (error) {
+        console.error('AdminPage init error:', error);
+        console.error('Error stack:', error.stack);
+        hideLoading();
+        handleError(error);
+      }
+    };
+    
+    // 전체 신청 목록 로드 (서버 측 필터링 및 페이징 사용)
+    async function loadAllRequests(filter = {}) {
+      try {
+        console.log('loadAllRequests: filter =', filter);
+        currentFilter = filter;
+        const sessionToken = getSessionToken();
+        
+        // 서버 측 필터링 및 페이징 옵션
+        const serverFilter = {
+          status: filter.status || '',
+          region: filter.region || '',
+          dateFrom: filter.dateFrom || '',
+          dateTo: filter.dateTo || '',
+          page: currentPage || 1,
+          pageSize: itemsPerPage || 20,
+          sortBy: 'requestDate',
+          sortOrder: 'desc'
+        };
+        
+        console.log('Calling getAllRequests API with server filter and pagination...');
+        const allReqs = await callServer('getAllRequests', serverFilter, sessionToken);
+        console.log('getAllRequests result:', allReqs ? allReqs.length + ' items' : 'null');
+        
+        if (!allReqs || !Array.isArray(allReqs)) {
+          console.error('Invalid response from getAllRequests:', allReqs);
+          allRequests = [];
+          renderAdminRequestsTable(allRequests);
+          return;
+        }
+        
+        // 서버에서 이미 필터링 및 페이징된 데이터를 받음
+        allRequests = allReqs;
+        renderAdminRequestsTable(allRequests);
+      } catch (error) {
+        console.error('loadAllRequests error:', error);
+        handleError(error);
+      }
+    }
+    
+    // 테이블 렌더링 (페이징 적용)
+    function renderAdminRequestsTable(requests) {
+      console.log('renderAdminRequestsTable: requests =', requests ? requests.length : 0);
+      const tbody = document.getElementById('adminRequestsBody');
+      tbody.innerHTML = '';
+      
+      if (!requests || requests.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted">신청 내역이 없습니다.</td></tr>';
+        document.getElementById('pagination').innerHTML = '';
+        return;
+      }
+      
+      // 페이징 계산
+      const totalPages = Math.ceil(requests.length / itemsPerPage);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, requests.length);
+      const pageRequests = requests.slice(startIndex, endIndex);
+      
+      // 현재 페이지가 범위를 벗어나면 마지막 페이지로 조정
+      if (currentPage > totalPages && totalPages > 0) {
+        currentPage = totalPages;
+        const adjustedStartIndex = (currentPage - 1) * itemsPerPage;
+        const adjustedEndIndex = Math.min(adjustedStartIndex + itemsPerPage, requests.length);
+        const adjustedPageRequests = requests.slice(adjustedStartIndex, adjustedEndIndex);
+        
+        adjustedPageRequests.forEach(req => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><input type="checkbox" class="request-check" value="${escapeHtml(req.requestNo)}"></td>
+            <td>${escapeHtml(req.requestNo)}</td>
+            <td>${createStatusBadge(req.status)}</td>
+            <td>${escapeHtml(req.requestDate || '')}</td>
+            <td>${escapeHtml(req.requester || '')}<br><small class="text-muted">${escapeHtml(req.team || '')}</small></td>
+            <td>${escapeHtml(req.region || '')}</td>
+            <td>${escapeHtml(req.itemName || '')}</td>
+            <td>${req.quantity || 0}</td>
+            <td>${escapeHtml(req.assetNo || '')}</td>
+            <td>${escapeHtml(req.handler || '-')}</td>
+            <td>
+              ${req.photoUrl ? `<a href="${escapeHtml(req.photoUrl)}" target="_blank" class="btn btn-sm btn-info">보기</a>` : '-'}
+            </td>
+            <td>
+              <button class="btn btn-sm btn-primary" onclick="showDetail('${req.requestNo}')">상세</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } else {
+        // 현재 페이지 데이터 렌더링
+        pageRequests.forEach(req => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><input type="checkbox" class="request-check" value="${escapeHtml(req.requestNo)}"></td>
+            <td>${escapeHtml(req.requestNo)}</td>
+            <td>${createStatusBadge(req.status)}</td>
+            <td>${escapeHtml(req.requestDate || '')}</td>
+            <td>${escapeHtml(req.requester || '')}<br><small class="text-muted">${escapeHtml(req.team || '')}</small></td>
+            <td>${escapeHtml(req.region || '')}</td>
+            <td>${escapeHtml(req.itemName || '')}</td>
+            <td>${req.quantity || 0}</td>
+            <td>${escapeHtml(req.assetNo || '')}</td>
+            <td>${escapeHtml(req.handler || '-')}</td>
+            <td>
+              ${req.photoUrl ? `<a href="${escapeHtml(req.photoUrl)}" target="_blank" class="btn btn-sm btn-info">보기</a>` : '-'}
+            </td>
+            <td>
+              <button class="btn btn-sm btn-primary" onclick="showDetail('${req.requestNo}')">상세</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+      
+      // 페이징 렌더링
+      renderPagination(totalPages, requests.length);
+      
+      console.log(`Table rendered: page ${currentPage}/${totalPages}, showing ${pageRequests.length} of ${requests.length} items`);
+    }
+    
+    // 페이징 렌더링
+    function renderPagination(totalPages, totalItems) {
+      const pagination = document.getElementById('pagination');
+      pagination.innerHTML = '';
+      
+      if (totalPages <= 1) {
+        // 페이지가 1개 이하면 페이징 숨김
+        return;
+      }
+      
+      // 전체 항목 수 표시
+      const infoLi = document.createElement('li');
+      infoLi.className = 'page-item disabled';
+      infoLi.innerHTML = `<span class="page-link">전체 ${totalItems}건</span>`;
+      pagination.appendChild(infoLi);
+      
+      // 이전 버튼
+      const prevLi = document.createElement('li');
+      prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+      prevLi.innerHTML = `
+        <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">
+          ← 이전
+        </a>
+      `;
+      pagination.appendChild(prevLi);
+      
+      // 페이지 번호
+      const startPage = Math.max(1, currentPage - 2);
+      const endPage = Math.min(totalPages, currentPage + 2);
+      
+      if (startPage > 1) {
+        const firstLi = document.createElement('li');
+        firstLi.className = 'page-item';
+        firstLi.innerHTML = `
+          <a class="page-link" href="#" onclick="changePage(1); return false;">1</a>
+        `;
+        pagination.appendChild(firstLi);
+        
+        if (startPage > 2) {
+          const ellipsisLi = document.createElement('li');
+          ellipsisLi.className = 'page-item disabled';
+          ellipsisLi.innerHTML = `<span class="page-link">...</span>`;
+          pagination.appendChild(ellipsisLi);
+        }
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        li.innerHTML = `
+          <a class="page-link" href="#" onclick="changePage(${i}); return false;">
+            ${i}
+          </a>
+        `;
+        pagination.appendChild(li);
+      }
+      
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          const ellipsisLi = document.createElement('li');
+          ellipsisLi.className = 'page-item disabled';
+          ellipsisLi.innerHTML = `<span class="page-link">...</span>`;
+          pagination.appendChild(ellipsisLi);
+        }
+        
+        const lastLi = document.createElement('li');
+        lastLi.className = 'page-item';
+        lastLi.innerHTML = `
+          <a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a>
+        `;
+        pagination.appendChild(lastLi);
+      }
+      
+      // 다음 버튼
+      const nextLi = document.createElement('li');
+      nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+      nextLi.innerHTML = `
+        <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">
+          다음 →
+        </a>
+      `;
+      pagination.appendChild(nextLi);
+    }
+    
+    // 페이지 변경
+    function changePage(page) {
+      currentPage = page;
+      renderAdminRequestsTable(allRequests);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    // 필터 적용
+    async function applyFilter() {
+      const filter = {
+        status: document.getElementById('filterStatus').value || undefined,
+        region: document.getElementById('filterRegion').value || undefined,
+        dateFrom: document.getElementById('filterDateFrom').value || undefined,
+        dateTo: document.getElementById('filterDateTo').value || undefined
+      };
+      
+      showLoading('필터 적용 중...');
+      await loadAllRequests(filter);
+      hideLoading();
+    }
+    
+    // 필터 초기화
+    function resetFilter() {
+      document.getElementById('filterStatus').value = '';
+      document.getElementById('filterRegion').value = '';
+      document.getElementById('filterDateFrom').value = '';
+      document.getElementById('filterDateTo').value = '';
+      applyFilter();
+    }
+    
+    // 전체 선택/해제
+    function toggleSelectAll() {
+      const checked = document.getElementById('selectAll').checked;
+      document.querySelectorAll('.request-check').forEach(cb => {
+        cb.checked = checked;
+      });
+    }
+    
+    // 선택된 신청번호 목록 가져오기
+    function getSelectedRequests() {
+      const selected = [];
+      document.querySelectorAll('.request-check:checked').forEach(cb => {
+        selected.push(cb.value);
+      });
+      return selected;
+    }
+    
+    // 상세 보기 - 상세 페이지로 이동
+    async function showDetail(requestNo) {
+      try {
+        console.log('showDetail called with requestNo:', requestNo);
+        const sessionToken = getSessionToken();
+        console.log('Session token:', sessionToken ? 'Present' : 'Missing');
+        
+        // ✅ sessionStorage에 파라미터 저장 (OAuth 리다이렉션 대비)
+        sessionStorage.setItem('pendingRequestNo', requestNo);
+        sessionStorage.setItem('pendingPage', 'admin-detail');
+        console.log('Saved to sessionStorage:', { requestNo, page: 'admin-detail' });
+        
+        const baseUrl = await callServer('getWebAppUrl');
+        console.log('Base URL:', baseUrl);
+        
+        if (!baseUrl) {
+          showToast('페이지 이동 중 오류가 발생했습니다.', 'danger');
+          return;
+        }
+        
+        const targetUrl = baseUrl + '?page=admin-detail&requestNo=' + encodeURIComponent(requestNo) + '&token=' + encodeURIComponent(sessionToken);
+        console.log('Target URL:', targetUrl);
+        console.log('Navigating to detail page...');
+        
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+        } else {
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('showDetail error:', error);
+        handleError(error);
+      }
+    }
+    
+    // 일괄 상태 변경
+    async function bulkUpdateStatus(newStatus) {
+      const selected = getSelectedRequests();
+      if (selected.length === 0) {
+        showToast('선택된 항목이 없습니다.', 'warning');
+        return;
+      }
+      
+      if (!confirm(`${selected.length}건을 "${newStatus}" 상태로 변경하시겠습니까?`)) return;
+      
+      try {
+        const sessionToken = getSessionToken();
+        showLoading('처리 중...');
+        const result = await callServer('bulkUpdateStatus', selected, newStatus, '', sessionToken);
+        hideLoading();
+        
+        if (result.success) {
+          showToast(result.message, 'success');
+          await loadAllRequests(currentFilter);
+        } else {
+          showToast(result.message || '처리에 실패했습니다.', 'danger');
+        }
+      } catch (error) {
+        hideLoading();
+        handleError(error);
+      }
+    }
+    
+    // 일괄 취소
+    async function bulkCancel() {
+      await bulkUpdateStatus('접수취소');
+    }
+    
+    // 상태 배지 생성
+    function createStatusBadge(status) {
+      if (!status) return '<span class="badge bg-secondary">-</span>';
+      
+      const colors = {
+        '접수중': 'warning',
+        '발주진행': 'primary',
+        '발주완료(납기확인)': 'success',
+        '발주완료(납기미정)': 'success', // 색상코드 #D4EDDA에 맞춰 success로 변경
+        '처리완료': 'success',
+        '접수취소': 'secondary'
+      };
+      
+      const color = colors[status] || 'secondary';
+      let badgeHtml = `<span class="badge bg-${color}">${escapeHtml(status)}</span>`;
+      
+      // 발주완료(납기미정) 상태에 대한 커스텀 색상 적용
+      if (status === '발주완료(납기미정)') {
+        badgeHtml = `<span class="badge" style="background-color: #D4EDDA !important; color: #155724 !important; border: 1px solid #C3E6CB !important;">${escapeHtml(status)}</span>`;
+      }
+      
+      return badgeHtml;
+    }
+    
+    // 담당자 배정
+    async function bulkAssign() {
+      const selected = getSelectedRequests();
+      if (selected.length === 0) {
+        showToast('선택된 항목이 없습니다.', 'warning');
+        return;
+      }
+      
+      const handlerEmail = prompt('담당자 이메일을 입력하세요:');
+      if (!handlerEmail) return;
+      
+      try {
+        showLoading('담당자 배정 중...');
+        let successCount = 0;
+        
+        for (const requestNo of selected) {
+          try {
+            const sessionToken = getSessionToken();
+            const result = await callServer('assignHandler', requestNo, handlerEmail, sessionToken);
+            if (result.success) successCount++;
+          } catch (error) {
+            console.error('Assign failed for ' + requestNo, error);
+          }
+        }
+        
+        hideLoading();
+        showToast(`${successCount}건에 담당자가 배정되었습니다.`, 'success');
+        await loadAllRequests(currentFilter);
+      } catch (error) {
+        hideLoading();
+        handleError(error);
+      }
+    }
+    
+    // 뒤로가기
+    async function goBack() {
+      try {
+        const sessionToken = getSessionToken();
+        const baseUrl = await callServer('getWebAppUrl');
+        if (!baseUrl) {
+          window.location.href = '?page=admin-dashboard';
+          return;
+        }
+        
+        const targetUrl = baseUrl + '?page=admin-dashboard&token=' + encodeURIComponent(sessionToken);
+        
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+        } else {
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('goBack error:', error);
+        window.location.href = '?page=admin-dashboard';
+      }
+    }
+  </script>
+</body>
+</html>
+

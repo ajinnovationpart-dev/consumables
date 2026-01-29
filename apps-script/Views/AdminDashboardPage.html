@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>관리자 대시보드</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* 관리자 페이지는 PC 전용 스타일 적용 */
+    body {
+      font-size: 14px !important;
+    }
+    
+    .container-fluid {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    /* 모바일 스타일 제거 */
+    @media (max-width: 768px) {
+      body {
+        font-size: 14px !important;
+      }
+      
+      input, .form-control, .form-select, textarea {
+        font-size: 14px !important;
+        min-height: auto !important;
+        padding: 0.375rem 0.75rem !important;
+      }
+      
+      button, .btn {
+        font-size: 14px !important;
+        min-height: auto !important;
+        padding: 0.375rem 0.75rem !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 헤더 -->
+  <nav class="navbar navbar-dark bg-primary mb-3">
+    <div class="container-fluid px-2">
+      <span class="navbar-brand mb-0">🏠 부품발주 (관리자)</span>
+      <div class="d-flex align-items-center">
+        <span class="text-white d-none d-md-inline me-2 small">
+          👤 <span id="headerUserName"></span>
+        </span>
+        <button class="btn btn-sm btn-outline-light" onclick="logout()">로그아웃</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid px-2 mt-2">
+    <h2 class="h4 mb-3">📊 관리자 대시보드</h2>
+    
+    <!-- 기간 선택 -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label">조회 기간</label>
+            <select class="form-select" id="periodSelect" onchange="changePeriod()">
+              <option value="today">오늘</option>
+              <option value="week">이번 주</option>
+              <option value="month" selected>이번 달</option>
+              <option value="custom">직접 선택</option>
+            </select>
+          </div>
+          <div class="col-md-3" id="customDateFrom" style="display:none;">
+            <label class="form-label">시작일</label>
+            <input type="date" class="form-control" id="startDate">
+          </div>
+          <div class="col-md-3" id="customDateTo" style="display:none;">
+            <label class="form-label">종료일</label>
+            <input type="date" class="form-control" id="endDate">
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-primary w-100" onclick="loadDashboardData()">
+              🔍 조회
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 디버깅 정보 (개발 중에만 표시) -->
+    <div id="debugInfo" class="alert alert-info" style="display:none;">
+      <strong>디버깅 정보:</strong>
+      <div id="debugContent"></div>
+    </div>
+
+    <!-- 현황 -->
+    <div class="row mb-4">
+      <div class="col-md-2">
+        <div class="card text-center border-primary" style="cursor: pointer;" onclick="navigateToStatusFilter('')" title="전체 신청 목록 보기">
+          <div class="card-body">
+            <h6>신규</h6>
+            <h2 class="text-primary" id="periodNew">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="card text-center border-warning" style="cursor: pointer;" onclick="navigateToStatusFilter('접수중')" title="접수중 상태 신청 보기">
+          <div class="card-body">
+            <h6>접수중</h6>
+            <h2 class="text-warning" id="periodRequested">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="card text-center border-info" style="cursor: pointer;" onclick="navigateToStatusFilter('발주진행')" title="발주진행 상태 신청 보기">
+          <div class="card-body">
+            <h6>진행중</h6>
+            <h2 class="text-info" id="periodInProgress">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="card text-center border-info" style="cursor: pointer;" onclick="navigateToStatusFilter('발주완료(납기미정)')" title="발주완료(납기미정) 상태 신청 보기">
+          <div class="card-body">
+            <h6>지연</h6>
+            <h2 class="text-danger" id="periodDelayed">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="card text-center border-success" style="cursor: pointer;" onclick="navigateToStatusFilter('처리완료')" title="처리완료 상태 신청 보기">
+          <div class="card-body">
+            <h6>완료</h6>
+            <h2 class="text-success" id="periodCompleted">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <div class="card text-center" style="cursor: pointer;" onclick="navigateToStatusFilter('')" title="전체 신청 목록 보기">
+          <div class="card-body">
+            <h6>전체</h6>
+            <h2 id="periodTotal">0</h2>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 긴급 처리 필요 -->
+    <div class="card mb-4">
+      <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">🔴 긴급 처리 필요</h5>
+      </div>
+      <div class="card-body">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>신청번호</th>
+              <th>품명</th>
+              <th>상태</th>
+              <th>신청자</th>
+              <th>신청일</th>
+              <th>액션</th>
+            </tr>
+          </thead>
+          <tbody id="urgentRequestsBody">
+            <tr>
+              <td colspan="6" class="text-center text-muted">긴급 처리 건이 없습니다.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 발주 지연 건 -->
+    <div class="card mb-4">
+      <div class="card-header bg-warning">
+        <h5 class="mb-0">⚠️ 발주 지연 건</h5>
+      </div>
+      <div class="card-body">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>신청번호</th>
+              <th>품명</th>
+              <th>지연 일수</th>
+              <th>신청자</th>
+              <th>담당자</th>
+              <th>액션</th>
+            </tr>
+          </thead>
+          <tbody id="delayedRequestsBody">
+            <tr>
+              <td colspan="6" class="text-center text-muted">지연 건이 없습니다.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 빠른 액션 -->
+    <div class="text-center mb-4">
+      <button class="btn btn-primary btn-lg" onclick="navigateToAllRequests()">
+        📋 전체 신청 목록
+      </button>
+      <button class="btn btn-outline-primary btn-lg ms-2" onclick="navigateToStatistics()">
+        📈 통계 및 리포트
+      </button>
+      <button class="btn btn-outline-secondary btn-lg ms-2" onclick="navigateToMaster()">
+        ⚙️ 기준정보 관리
+      </button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <?!= include('JavaScript'); ?>
+  <script>
+    // 전역 에러 핸들러 - 빈 페이지 방지
+    window.addEventListener('error', function(e) {
+      console.error('Global error caught:', e.error || e.message);
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'alert alert-danger m-4';
+      errorDiv.style.position = 'fixed';
+      errorDiv.style.top = '20px';
+      errorDiv.style.left = '50%';
+      errorDiv.style.transform = 'translateX(-50%)';
+      errorDiv.style.zIndex = '9999';
+      errorDiv.style.maxWidth = '600px';
+      errorDiv.innerHTML = `
+        <h5>⚠️ 페이지 로딩 오류</h5>
+        <p><strong>오류:</strong> ${e.message || '알 수 없는 오류'}</p>
+        <button class="btn btn-primary btn-sm" onclick="window.location.reload()">새로고침</button>
+        <button class="btn btn-secondary btn-sm" onclick="window.location.href='?page=login'">로그인</button>
+      `;
+      document.body.appendChild(errorDiv);
+    });
+
+    // 세션 토큰 가져오기
+    function getSessionToken() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('token') || sessionStorage.getItem('sessionToken');
+    }
+
+    // 페이지 초기화
+    window.onload = async function() {
+      try {
+        const startTime = performance.now();
+        console.log('✅ AdminDashboard: Initializing...');
+        
+        const sessionToken = getSessionToken();
+        if (!sessionToken) {
+          window.location.href = '?page=login';
+          return;
+        }
+
+        showLoading('대시보드 로딩 중...');
+
+        // ✅ 사용자 정보 캐시 확인
+        let user = sessionStorage.getItem('currentUser');
+        if (user) {
+          user = JSON.parse(user);
+          console.log('✅ Using cached user info');
+        } else {
+          user = await callServer('getCurrentUser', sessionToken);
+          if (user) {
+            sessionStorage.setItem('currentUser', JSON.stringify(user));
+          }
+        }
+        
+        if (!user || user.role !== '관리자') {
+          hideLoading();
+          window.location.href = '?page=login';
+          return;
+        }
+
+        document.getElementById('headerUserName').textContent = user.name || '관리자';
+
+        // 기본 기간: 이번 달
+        changePeriod();
+        await loadDashboardData();
+
+        hideLoading();
+        
+        const loadTime = (performance.now() - startTime).toFixed(0);
+        console.log(`✅ AdminDashboard loaded in ${loadTime}ms`);
+      } catch (error) {
+        console.error('Dashboard init error:', error);
+        console.error('Error stack:', error.stack);
+        hideLoading();
+        
+        // 에러 메시지 표시
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger m-4';
+        errorDiv.innerHTML = `
+          <h5>대시보드 로딩 실패</h5>
+          <p><strong>오류:</strong> ${escapeHtml(error.message || '알 수 없는 오류가 발생했습니다.')}</p>
+          <p><small>콘솔을 확인하여 자세한 오류 정보를 확인하세요.</small></p>
+          <button class="btn btn-primary" onclick="window.location.reload()">새로고침</button>
+          <button class="btn btn-secondary" onclick="window.location.href='?page=login'">로그인으로</button>
+        `;
+        document.body.insertBefore(errorDiv, document.body.firstChild);
+        
+        if (typeof showToast === 'function') {
+          showToast('대시보드 로딩 실패: ' + (error.message || '알 수 없는 오류'), 'danger');
+        }
+      }
+    };
+    
+    // 한국어 날짜 형식을 Date 객체로 변환
+    function parseKoreanDate(dateStr) {
+      if (!dateStr) return null;
+      
+      try {
+        // "2026. 1. 7 PM 05:04:45" → Date 객체
+        const parts = dateStr.split(' ');
+        if (parts.length < 3) return null;
+        
+        // 날짜 부분: "2026.", "1.", "7"
+        const dateParts = [parts[0], parts[1], parts[2]].join('').split('.').map(p => p.trim()).filter(p => p);
+        if (dateParts.length < 3) return null;
+        
+        const year = parseInt(dateParts[0]);
+        const month = parseInt(dateParts[1]) - 1; // 0-based
+        const day = parseInt(dateParts[2]);
+        
+        // 시간 부분 (있으면)
+        let hours = 0, minutes = 0, seconds = 0;
+        if (parts.length >= 5) {
+          const ampm = parts[3]; // "AM" 또는 "PM"
+          const timeParts = parts[4].split(':');
+          hours = parseInt(timeParts[0]);
+          if (ampm === 'PM' && hours !== 12) hours += 12;
+          if (ampm === 'AM' && hours === 12) hours = 0;
+          if (timeParts.length > 1) minutes = parseInt(timeParts[1]);
+          if (timeParts.length > 2) seconds = parseInt(timeParts[2]);
+        }
+        
+        return new Date(year, month, day, hours, minutes, seconds);
+      } catch (e) {
+        console.error('Date parsing error:', dateStr, e);
+        return null;
+      }
+    }
+    
+    // 기간 선택 변경
+    function changePeriod() {
+      const period = document.getElementById('periodSelect').value;
+      const customDateFrom = document.getElementById('customDateFrom');
+      const customDateTo = document.getElementById('customDateTo');
+      
+      if (period === 'custom') {
+        customDateFrom.style.display = 'block';
+        customDateTo.style.display = 'block';
+      } else {
+        customDateFrom.style.display = 'none';
+        customDateTo.style.display = 'none';
+        
+        const today = new Date();
+        const startDate = new Date();
+        
+        switch(period) {
+          case 'today':
+            // 오늘
+            break;
+          case 'week':
+            // 이번 주 (월요일 ~ 일요일)
+            const day = today.getDay();
+            const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+            startDate.setDate(diff);
+            break;
+          case 'month':
+            // 이번 달 (1일 ~ 말일)
+            startDate.setDate(1);
+            break;
+        }
+        
+        document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+        document.getElementById('endDate').value = today.toISOString().split('T')[0];
+      }
+    }
+    
+    // 대시보드 데이터 로드
+    async function loadDashboardData() {
+      try {
+        showLoading('데이터 로딩 중...');
+        const sessionToken = getSessionToken();
+        
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        
+        console.log('Loading dashboard data for period:', startDate, '~', endDate);
+        
+        // 전체 데이터 조회
+        console.log('Calling getAllRequests with sessionToken:', sessionToken);
+        const allRequests = await callServer('getAllRequests', {}, sessionToken);
+        console.log('getAllRequests response type:', typeof allRequests);
+        console.log('getAllRequests is Array:', Array.isArray(allRequests));
+        console.log('getAllRequests is null:', allRequests === null);
+        console.log('getAllRequests is undefined:', allRequests === undefined);
+        console.log('getAllRequests value:', allRequests);
+        
+        if (allRequests) {
+          console.log('All requests length:', allRequests.length);
+          if (allRequests.length > 0) {
+            console.log('First item:', JSON.stringify(allRequests[0]));
+          }
+        }
+        
+        if (!allRequests || !Array.isArray(allRequests)) {
+          console.error('Invalid response from getAllRequests');
+          console.error('Response:', allRequests);
+          console.error('Expected: Array, Got:', typeof allRequests);
+          displayStats({ period: {} });
+          displayUrgentRequests([]);
+          displayDelayedRequests([]);
+          hideLoading();
+          showToast('데이터 조회 실패: 응답이 올바르지 않습니다.', 'danger');
+          return;
+        }
+        
+        console.log('✅ getAllRequests returned', allRequests.length, 'items');
+        
+        // 기간 필터링
+        const filtered = allRequests.filter(req => {
+          if (!req.requestDate) {
+            console.log('Request has no date:', req.requestNo);
+            return false;
+          }
+          
+          // 날짜 부분만 추출: "2026. 1. 7 PM 05:04:45" → "2026. 1. 7"
+          let reqDateStr = req.requestDate.split(' ')[0] + '.' + req.requestDate.split(' ')[1] + '.' + req.requestDate.split(' ')[2];
+          console.log('Original date:', req.requestDate);
+          console.log('Extracted date:', reqDateStr);
+          
+          // "2026. 1. 7" → "2026-01-07"
+          if (reqDateStr.includes('.')) {
+            const parts = reqDateStr.split('.').map(p => p.trim()).filter(p => p);
+            console.log('Date parts:', parts);
+            if (parts.length >= 3) {
+              reqDateStr = parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+              console.log('Normalized date:', reqDateStr);
+            }
+          }
+          
+          const matches = reqDateStr >= startDate && reqDateStr <= endDate;
+          console.log('Date comparison:', reqDateStr, '>=', startDate, '&&', reqDateStr, '<=', endDate, '=', matches);
+          return matches;
+        });
+        
+        console.log('Filtered requests:', filtered.length);
+        
+        // 통계 계산
+        const stats = {
+          period: {
+            new: 0,
+            requested: 0,
+            inProgress: 0,
+            delayed: 0,
+            completed: 0,
+            total: filtered.length
+          }
+        };
+        
+        filtered.forEach(req => {
+          if (req.status === '접수중') stats.period.requested++;
+          else if (['발주진행', '발주완료(납기확인)', '발주완료(납기미정)'].includes(req.status)) stats.period.inProgress++;
+          else if (req.status === '처리완료') stats.period.completed++;
+        });
+        
+        displayStats(stats);
+        
+        // 긴급 처리 건
+        const urgent = allRequests.filter(req => {
+          if (req.status !== '접수중' || !req.requestDate) return false;
+          let reqDateStr = req.requestDate.split(' ')[0];
+          if (reqDateStr.includes('.')) {
+            const parts = reqDateStr.split('.').map(p => p.trim());
+            if (parts.length >= 3) {
+              reqDateStr = parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+            }
+          }
+          const oneDayAgo = new Date();
+          oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+          const oneDayAgoStr = oneDayAgo.toISOString().split('T')[0];
+          return reqDateStr < oneDayAgoStr;
+        });
+        displayUrgentRequests(urgent);
+        
+        // 지연 건
+        const delayed = allRequests.filter(req => {
+          if (req.status !== '발주진행' || !req.orderDate) return false;
+          let orderDateStr = req.orderDate.split(' ')[0];
+          if (orderDateStr.includes('.')) {
+            const dateParts = req.orderDate.split(' ');
+            if (dateParts.length >= 3) {
+              orderDateStr = dateParts[0] + '.' + dateParts[1] + '.' + dateParts[2];
+            }
+            const parts = orderDateStr.split('.').map(p => p.trim()).filter(p => p);
+            if (parts.length >= 3) {
+              orderDateStr = parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+            }
+          }
+          const threeDaysAgo = new Date();
+          threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+          const threeDaysAgoStr = threeDaysAgo.toISOString().split('T')[0];
+          return orderDateStr < threeDaysAgoStr;
+        }).map(req => {
+          const orderDate = parseKoreanDate(req.orderDate);
+          const delayDays = orderDate && !isNaN(orderDate.getTime()) 
+            ? Math.floor((new Date() - orderDate) / (1000 * 60 * 60 * 24))
+            : 0;
+          return {
+            ...req,
+            delayDays: delayDays
+          };
+        });
+        displayDelayedRequests(delayed);
+        
+        hideLoading();
+      } catch (error) {
+        console.error('loadDashboardData error:', error);
+        hideLoading();
+        showToast('데이터 로딩 실패: ' + error.message, 'danger');
+      }
+    }
+
+    // 통계 표시
+    function displayStats(stats) {
+      const period = stats.period || stats.today || {};
+      document.getElementById('periodNew').textContent = period.new || 0;
+      document.getElementById('periodRequested').textContent = period.requested || 0;
+      document.getElementById('periodInProgress').textContent = period.inProgress || 0;
+      document.getElementById('periodDelayed').textContent = period.delayed || 0;
+      document.getElementById('periodCompleted').textContent = period.completed || 0;
+      document.getElementById('periodTotal').textContent = period.total || 0;
+    }
+
+    // 긴급 처리 건 표시
+    function displayUrgentRequests(requests) {
+      const tbody = document.getElementById('urgentRequestsBody');
+      tbody.innerHTML = '';
+
+      if (!requests || requests.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">긴급 처리 건이 없습니다.</td></tr>';
+        return;
+      }
+
+      requests.forEach(req => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${escapeHtml(req.requestNo)}</strong></td>
+          <td>${escapeHtml(req.itemName)}</td>
+          <td><span class="badge bg-${getStatusColor(req.status)}">${escapeHtml(req.status)}</span></td>
+          <td>${escapeHtml(req.requesterName)}</td>
+          <td>${formatDate(req.requestDate, 'MM-DD')}</td>
+          <td>
+            <button class="btn btn-sm btn-primary" onclick="processRequest('${req.requestNo}')">
+              처리
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 지연 건 표시
+    function displayDelayedRequests(requests) {
+      const tbody = document.getElementById('delayedRequestsBody');
+      tbody.innerHTML = '';
+
+      if (!requests || requests.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">지연 건이 없습니다.</td></tr>';
+        return;
+      }
+
+      requests.forEach(req => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${escapeHtml(req.requestNo)}</strong></td>
+          <td>${escapeHtml(req.itemName)}</td>
+          <td><span class="badge bg-danger">${req.delayDays}일</span></td>
+          <td>${escapeHtml(req.requesterName)}</td>
+          <td>${escapeHtml(req.handler || '-')}</td>
+          <td>
+            <button class="btn btn-sm btn-warning" onclick="updateDelayStatus('${req.requestNo}')">
+              상태 변경
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 상태별 색상
+    function getStatusColor(status) {
+      const colors = {
+        '접수중': 'warning',
+        '발주진행': 'primary',
+        '발주완료(납기확인)': 'success',
+        '발주완료(납기미정)': 'info',
+        '처리완료': 'success',
+        '접수취소': 'secondary'
+      };
+      return colors[status] || 'secondary';
+    }
+
+    function formatDate(dateString, format = 'YYYY-MM-DD') {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      if (format === 'MM-DD') {
+        return (date.getMonth() + 1).toString().padStart(2, '0') + '-' + 
+               date.getDate().toString().padStart(2, '0');
+      }
+      return date.toISOString().split('T')[0];
+    }
+
+    // API 호출 함수들
+    async function getDashboardStats(sessionToken) {
+      try {
+        const result = await callServer('getDashboardStats', sessionToken);
+        // ErrorHandler가 반환한 객체인지 확인
+        if (result && result.success === false) {
+          console.warn('getDashboardStats returned error:', result.message);
+          return { today: {} };
+        }
+        return result || { today: {} };
+      } catch (error) {
+        console.error('getDashboardStats error:', error);
+        return { today: {} };
+      }
+    }
+
+    async function getUrgentRequests(sessionToken) {
+      try {
+        const result = await callServer('getUrgentRequests', sessionToken);
+        // ErrorHandler가 반환한 객체인지 확인
+        if (result && result.success === false) {
+          console.warn('getUrgentRequests returned error:', result.message);
+          return [];
+        }
+        // 배열인지 확인
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.error('getUrgentRequests error:', error);
+        return [];
+      }
+    }
+
+    async function getDelayedRequests(sessionToken) {
+      try {
+        const result = await callServer('getDelayedRequests', sessionToken);
+        // ErrorHandler가 반환한 객체인지 확인
+        if (result && result.success === false) {
+          console.warn('getDelayedRequests returned error:', result.message);
+          return [];
+        }
+        // 배열인지 확인
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.error('getDelayedRequests error:', error);
+        return [];
+      }
+    }
+
+    async function processRequest(requestNo) {
+      try {
+        console.log('processRequest called with requestNo:', requestNo);
+        const sessionToken = getSessionToken();
+        
+        // ✅ sessionStorage에 파라미터 저장 (OAuth 리다이렉션 대비)
+        sessionStorage.setItem('pendingRequestNo', requestNo);
+        sessionStorage.setItem('pendingPage', 'admin-detail');
+        console.log('Saved to sessionStorage:', { requestNo, page: 'admin-detail' });
+        
+        const baseUrl = await callServer('getWebAppUrl');
+        console.log('Base URL:', baseUrl);
+        
+        if (!baseUrl) {
+          showToast('페이지 이동 중 오류가 발생했습니다.', 'danger');
+          return;
+        }
+        
+        const targetUrl = baseUrl + '?page=admin-detail&requestNo=' + encodeURIComponent(requestNo) + '&token=' + encodeURIComponent(sessionToken);
+        console.log('Target URL:', targetUrl);
+        console.log('Navigating to detail page...');
+        
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+        } else {
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('processRequest error:', error);
+        showToast('페이지 이동 실패: ' + error.message, 'danger');
+      }
+    }
+
+    async function updateDelayStatus(requestNo) {
+      try {
+        const sessionToken = getSessionToken();
+        const baseUrl = await callServer('getWebAppUrl');
+        if (!baseUrl) return;
+        
+        const targetUrl = baseUrl + '?page=admin-detail&requestNo=' + encodeURIComponent(requestNo) + '&token=' + encodeURIComponent(sessionToken);
+        
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+        } else {
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('updateDelayStatus error:', error);
+      }
+    }
+
+    async function navigateToAllRequests() {
+      try {
+        const sessionToken = getSessionToken();
+        const baseUrl = await callServer('getWebAppUrl');
+        if (!baseUrl) return;
+        
+        const targetUrl = baseUrl + '?page=admin-requests&token=' + encodeURIComponent(sessionToken);
+        
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+        } else {
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('navigateToAllRequests error:', error);
+      }
+    }
+
+    async function navigateToStatistics() {
+      try {
+        const sessionToken = getSessionToken();
+        const baseUrl = await callServer('getWebAppUrl');
+        if (!baseUrl) return;
+        
+        const targetUrl = baseUrl + '?page=admin-statistics&token=' + encodeURIComponent(sessionToken);
+        
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+        } else {
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('navigateToStatistics error:', error);
+      }
+    }
+
+    async function navigateToMaster() {
+      try {
+        const sessionToken = getSessionToken();
+        const baseUrl = await callServer('getWebAppUrl');
+        if (!baseUrl) return;
+        
+        const targetUrl = baseUrl + '?page=admin-master&token=' + encodeURIComponent(sessionToken);
+        
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+        } else {
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('navigateToMaster error:', error);
+      }
+    }
+
+    // 상태별 필터로 전체 신청 목록 이동
+    async function navigateToStatusFilter(status) {
+      try {
+        const sessionToken = getSessionToken();
+        const baseUrl = await callServer('getWebAppUrl');
+        if (!baseUrl) return;
+        
+        let targetUrl = baseUrl + '?page=admin-requests&token=' + encodeURIComponent(sessionToken);
+        if (status) {
+          // 상태를 URL 파라미터와 sessionStorage에 모두 저장
+          targetUrl += '&status=' + encodeURIComponent(status);
+          sessionStorage.setItem('adminStatusFilter', status);
+        }
+        
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+        } else {
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('navigateToStatusFilter error:', error);
+        showToast('페이지 이동 중 오류가 발생했습니다.', 'danger');
+      }
+    }
+
+    function logout() {
+      if (confirm('로그아웃하시겠습니까?')) {
+        try {
+          const sessionToken = getSessionToken();
+          // 서버 로그아웃 호출 (실패해도 클라이언트 정리 진행)
+          callServer('logout', sessionToken).then(() => {
+            console.log('Logout successful');
+          }).catch(error => {
+            console.error('Logout server error:', error);
+          }).finally(() => {
+            // 클라이언트 세션 정리
+            sessionStorage.removeItem('sessionToken');
+            sessionStorage.removeItem('currentUser');
+            sessionStorage.removeItem('pendingRequestNo');
+            sessionStorage.removeItem('pendingPage');
+            sessionStorage.removeItem('adminStatusFilter');
+            
+            // iframe 환경 고려한 리다이렉트
+            const loginUrl = '?page=login';
+            if (window.top && window.top !== window) {
+              // iframe 내부인 경우
+              window.top.location.href = loginUrl;
+            } else {
+              // 일반 페이지인 경우
+              window.location.href = loginUrl;
+            }
+          });
+        } catch (error) {
+          console.error('Logout error:', error);
+          // 에러 발생 시에도 클라이언트 정리 및 리다이렉트
+          sessionStorage.removeItem('sessionToken');
+          sessionStorage.removeItem('currentUser');
+          sessionStorage.removeItem('pendingRequestNo');
+          sessionStorage.removeItem('pendingPage');
+          sessionStorage.removeItem('adminStatusFilter');
+          
+          const loginUrl = '?page=login';
+          if (window.top && window.top !== window) {
+            window.top.location.href = loginUrl;
+          } else {
+            window.location.href = loginUrl;
+          }
+        }
+      }
+    }
+
+    // 스크립트 로드 완료 확인
+    console.log('✓ AdminDashboardPage script loaded');
+  </script>
+</body>
+</html>
+

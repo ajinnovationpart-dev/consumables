@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Environment (비밀키 포함)
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+frontend/dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Excel/CSV 데이터 (로컬 전용, 원하면 제거 후 커밋)
+# 소모품발주.xlsx
+# templates/*.csv

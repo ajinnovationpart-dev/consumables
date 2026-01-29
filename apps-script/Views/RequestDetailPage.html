@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>신청 상세</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <?!= include('Stylesheet'); ?>
+</head>
+<body>
+  <!-- 헤더 -->
+  <nav class="navbar navbar-dark bg-primary mb-3">
+    <div class="container-fluid px-2">
+      <span class="navbar-brand mb-0">🏠 부품발주</span>
+      <div class="d-flex align-items-center">
+        <span class="text-white d-none d-md-inline me-2 small">
+          👤 <span id="headerUserName"></span> (<span id="headerUserTeam"></span>)
+        </span>
+        <button class="btn btn-sm btn-outline-light" onclick="goBack()">← 뒤로</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid px-2 mt-2">
+    <div class="d-flex align-items-center mb-3">
+      <h2 class="h4 mb-0">신청 상세 - <span id="detailRequestNo"></span></h2>
+    </div>
+
+    <!-- 상태 진행바 -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="mb-3">🔖 진행 상태</h5>
+        <div id="statusProgressBar"></div>
+      </div>
+    </div>
+
+    <!-- 신청 정보 -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">📋 신청 정보</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong>신청번호</strong>
+            <p id="requestNo"></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>신청일시</strong>
+            <p id="requestDate"></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>신청자</strong>
+            <p id="requester"></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>현재 상태</strong>
+            <p><span id="currentStatus" class="badge"></span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 부품 정보 -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">🔧 부품 정보</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong>품명</strong>
+            <p id="itemName"></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>모델명</strong>
+            <p id="modelName"></p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <strong>수량</strong>
+            <p id="quantity"></p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <strong>관리번호</strong>
+            <p id="assetNo"></p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <strong>시리얼번호</strong>
+            <p id="serialNo"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 수령 정보 -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">📦 수령 정보</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong>배송지</strong>
+            <p id="deliveryPlace"></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>전화번호</strong>
+            <p id="phone"></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>업체명</strong>
+            <p id="company"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 첨부 사진 -->
+    <div class="card mb-4" id="photoCard">
+      <div class="card-header">
+        <h5 class="mb-0">📷 첨부 사진</h5>
+      </div>
+      <div class="card-body text-center">
+        <img id="photoPreview" class="img-thumbnail mb-2" style="max-width: 500px; display: none; cursor: pointer;" 
+             onclick="copyImageToClipboard(event)" 
+             oncontextmenu="copyImageToClipboard(event); return false;" 
+             title="클릭하여 이미지 복사 (좌클릭/우클릭)">
+        <br>
+        <a id="photoLink" href="#" target="_blank" class="btn btn-outline-primary" style="display: none;">
+          🔍 원본 보기
+        </a>
+      </div>
+    </div>
+
+    <!-- 처리 정보 -->
+    <div class="card mb-4" id="handlerInfoCard" style="display:none;">
+      <div class="card-header">
+        <h5 class="mb-0">👨‍💼 처리 정보</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong>접수담당자</strong>
+            <p id="handler"></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>발주일시</strong>
+            <p id="orderDate"></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>예상납기일</strong>
+            <p id="expectedDeliveryDate"></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>수령확인일시</strong>
+            <p id="receiptDate"></p>
+          </div>
+          <div class="col-md-12">
+            <strong>담당자 비고</strong>
+            <p id="handlerRemarks"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 비고 -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">📝 비고</h5>
+      </div>
+      <div class="card-body">
+        <p id="remarks"></p>
+      </div>
+    </div>
+
+    <!-- 액션 버튼 -->
+    <div class="d-grid gap-2 d-md-flex justify-content-md-end mb-5">
+      <button id="cancelBtn" class="btn btn-danger" onclick="cancelRequest()" style="display:none;">
+        ✕ 신청 취소
+      </button>
+      <button id="confirmReceiptBtn" class="btn btn-success" onclick="confirmReceipt()" style="display:none;">
+        ✓ 수령 확인
+      </button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <?!= include('JavaScript'); ?>
+  <script>
+    let currentRequest = null;
+
+    // 세션 토큰 가져오기
+    function getSessionToken() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('token') || sessionStorage.getItem('sessionToken');
+    }
+
+    // 페이지 초기화
+    window.onload = async function() {
+      try {
+        const startTime = performance.now();
+        console.log('RequestDetailPage: Initializing...');
+        console.log('Current URL:', window.location.href);
+        console.log('URL search params:', window.location.search);
+        
+        const sessionToken = getSessionToken();
+        console.log('Session token:', sessionToken ? 'Present' : 'Missing');
+        
+        if (!sessionToken) {
+          console.warn('No session token, redirecting to login');
+          window.location.href = '?page=login';
+          return;
+        }
+
+        // URL에서 신청번호 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        console.log('All URL params:', Array.from(urlParams.entries()));
+        
+        // ✅ URL 파라미터 먼저 시도, 없으면 sessionStorage에서 읽기
+        let requestNo = urlParams.get('requestNo');
+        
+        if (!requestNo) {
+          console.log('No requestNo in URL, checking sessionStorage...');
+          requestNo = sessionStorage.getItem('pendingRequestNo');
+          console.log('Found in sessionStorage:', requestNo);
+          
+          // 사용 후 삭제
+          if (requestNo) {
+            sessionStorage.removeItem('pendingRequestNo');
+            sessionStorage.removeItem('pendingPage');
+          }
+        }
+        
+        console.log('Request No:', requestNo);
+        console.log('Request No type:', typeof requestNo);
+
+        if (!requestNo) {
+          console.warn('No request number provided');
+          showErrorModal('신청번호가 없습니다.<br>목록으로 돌아갑니다.');
+          return;
+        }
+
+        showLoading('상세 정보 로딩 중...');
+
+        // 사용자 정보 로드
+        const user = await callServer('getCurrentUser', sessionToken);
+        if (!user) {
+          window.location.href = '?page=login';
+          return;
+        }
+
+        document.getElementById('headerUserName').textContent = user.name;
+        document.getElementById('headerUserTeam').textContent = user.team;
+
+        // 상세 정보 로드
+        currentRequest = await callServer('getRequest', requestNo, sessionToken);
+        
+        if (!currentRequest) {
+          console.warn('Request not found');
+          hideLoading();
+          showErrorModal('신청 정보를 찾을 수 없습니다.<br>목록으로 돌아갑니다.');
+          return;
+        }
+        
+        // 에러 응답 체크
+        if (currentRequest.success === false) {
+          console.error('Request loading failed:', currentRequest.message);
+          hideLoading();
+          showErrorModal('신청 정보 로딩 실패:<br>' + currentRequest.message);
+          return;
+        }
+
+        // 화면에 표시
+        displayRequestDetail(currentRequest);
+
+        hideLoading();
+        
+        const loadTime = (performance.now() - startTime).toFixed(0);
+        console.log(`✅ RequestDetailPage loaded in ${loadTime}ms`);
+      } catch (error) {
+        hideLoading();
+        showToast('상세 정보 로딩 실패: ' + error.message, 'danger');
+        console.error('Detail init error:', error);
+      }
+    };
+    
+    // 에러 모달 표시 (SecurityError 방지)
+    function showErrorModal(message) {
+      const modal = document.createElement('div');
+      modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+      `;
+      modal.innerHTML = `
+        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; text-align: center;">
+          <h4 style="color: #dc3545; margin-bottom: 20px;">⚠️ 알림</h4>
+          <p style="margin-bottom: 30px;">${message}</p>
+          <button class="btn btn-primary btn-lg" onclick="this.closest('div').parentElement.remove(); goBack();">
+            목록으로 돌아가기
+          </button>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    // 상세 정보 표시
+    function displayRequestDetail(req) {
+      // 상태 진행바
+      renderStatusProgress(req.status);
+
+      // 신청 정보
+      document.getElementById('detailRequestNo').textContent = req.requestNo;
+      document.getElementById('requestNo').textContent = req.requestNo;
+      document.getElementById('requestDate').textContent = formatDateTime(req.requestDate);
+      document.getElementById('requester').textContent = `${req.requesterName || ''} (${req.team || ''})`;
+
+      const statusBadge = document.getElementById('currentStatus');
+      statusBadge.textContent = req.status;
+      statusBadge.className = `badge bg-${getStatusColor(req.status)}`;
+
+      // 부품 정보
+      document.getElementById('itemName').textContent = req.itemName || '-';
+      document.getElementById('modelName').textContent = req.modelName || '-';
+      document.getElementById('quantity').textContent = req.quantity || '-';
+      document.getElementById('assetNo').textContent = req.assetNo || '-';
+      document.getElementById('serialNo').textContent = req.serialNo || '-';
+
+      // 수령 정보
+      document.getElementById('deliveryPlace').textContent = req.deliveryPlace || '-';
+      document.getElementById('phone').textContent = req.phone || '-';
+      document.getElementById('company').textContent = req.company || '-';
+
+      // 사진
+      if (req.photoUrl) {
+        const imgElement = document.getElementById('photoPreview');
+        imgElement.setAttribute('data-original-url', req.photoUrl); // 원본 URL 저장
+        document.getElementById('photoLink').href = req.photoUrl;
+        document.getElementById('photoLink').style.display = 'inline-block';
+        
+        // Google Drive 이미지인 경우 서버를 통해 가져와서 표시
+        if (req.photoUrl.includes('drive.google.com')) {
+          showLoading('이미지를 불러오는 중...');
+          const sessionToken = getSessionToken();
+          
+          callServer('getImageAsBase64', req.photoUrl, sessionToken)
+            .then(result => {
+              if (result && result.success && result.dataUrl) {
+                // Base64 Data URL로 이미지 표시
+                imgElement.src = result.dataUrl;
+                imgElement.style.display = 'block';
+                console.log('Image loaded successfully from server');
+                
+                // 이미지 미리 로드 (복사 준비)
+                preloadImageForCopy(req.photoUrl).catch(err => {
+                  console.log('Image preload failed (non-critical):', err);
+                });
+              } else {
+                throw new Error(result?.error || '이미지를 불러오는데 실패했습니다.');
+              }
+            })
+            .catch(error => {
+              console.error('Failed to load image:', error);
+              // 실패 시 원본 URL로 시도
+              imgElement.src = req.photoUrl;
+              imgElement.style.display = 'block';
+              showToast('이미지 로드에 실패했습니다. 원본 링크를 사용합니다.', 'warning');
+            })
+            .finally(() => {
+              hideLoading();
+            });
+        } else {
+          // 일반 이미지 URL인 경우 직접 표시
+          imgElement.src = req.photoUrl;
+          imgElement.style.display = 'block';
+          
+          // 이미지 미리 로드 (복사 준비)
+          preloadImageForCopy(req.photoUrl).catch(err => {
+            console.log('Image preload failed (non-critical):', err);
+          });
+        }
+      } else {
+        document.getElementById('photoCard').style.display = 'none';
+      }
+
+      // 처리 정보 - 항상 표시 (발주일시 및 예상납기일 정보 노출)
+      document.getElementById('handlerInfoCard').style.display = 'block';
+      document.getElementById('handler').textContent = req.handler || '-';
+      document.getElementById('orderDate').textContent = req.orderDate ? formatDateTime(req.orderDate) : '-';
+      document.getElementById('expectedDeliveryDate').textContent = req.expectedDeliveryDate ? formatDate(req.expectedDeliveryDate) : '-';
+      document.getElementById('receiptDate').textContent = req.receiptDate ? formatDateTime(req.receiptDate) : '-';
+      document.getElementById('handlerRemarks').textContent = req.handlerRemarks || '-';
+
+      // 비고
+      document.getElementById('remarks').textContent = req.remarks || '-';
+
+      // 액션 버튼 표시
+      showActionButtons(req);
+    }
+
+    // 상태 진행바 렌더링
+    function renderStatusProgress(currentStatus) {
+      const container = document.getElementById('statusProgressBar');
+
+      const statuses = [
+        { code: '접수중', label: '접수중' },
+        { code: '발주진행', label: '발주진행' },
+        { code: '발주완료(납기확인)', label: '발주완료(납기확인)' },
+        { code: '발주완료(납기미정)', label: '발주완료(납기미정)' },
+        { code: '처리완료', label: '처리완료' }
+      ];
+
+      let currentIndex = statuses.findIndex(s => s.code === currentStatus);
+      if (currentIndex === -1) currentIndex = 0;
+
+      let html = '<div class="d-flex justify-content-between align-items-center">';
+
+      statuses.forEach((status, index) => {
+        const isActive = index <= currentIndex;
+        const isCurrent = index === currentIndex;
+        
+        // status.label을 안전하게 처리 (escapeHtml이 있으면 사용, 없으면 직접 처리)
+        let escapedLabel = status.label;
+        if (typeof escapeHtml === 'function') {
+          escapedLabel = escapeHtml(status.label);
+        } else {
+          // 간단한 HTML 이스케이프
+          escapedLabel = String(status.label)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        }
+
+        html += '<div class="text-center flex-fill">';
+        html += '<div class="mb-2">';
+        html += '<span class="badge ' + (isActive ? 'bg-primary' : 'bg-secondary') + '" ';
+        html += 'style="width: 40px; height: 40px; line-height: 30px; font-size: 18px;">';
+        html += (isCurrent ? '●' : isActive ? '✓' : '○');
+        html += '</span>';
+        html += '</div>';
+        html += '<small class="' + (isActive ? 'fw-bold' : 'text-muted') + '">' + escapedLabel + '</small>';
+        html += '</div>';
+
+        if (index < statuses.length - 1) {
+          html += '<div class="flex-fill" style="height: 2px; background: ' + (isActive ? '#0d6efd' : '#dee2e6') + '; margin: 0 10px 20px;"></div>';
+        }
+      });
+
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // 액션 버튼 표시
+    function showActionButtons(req) {
+      const cancelBtn = document.getElementById('cancelBtn');
+      const confirmBtn = document.getElementById('confirmReceiptBtn');
+
+      cancelBtn.style.display = 'none';
+      confirmBtn.style.display = 'none';
+
+      if (req.status === '접수중') {
+        cancelBtn.style.display = 'inline-block';
+      } else if (req.status === '발주완료(납기확인)' || req.status === '발주완료(납기미정)') {
+        confirmBtn.style.display = 'inline-block';
+      }
+    }
+
+    // 상태별 색상
+    function getStatusColor(status) {
+      const colors = {
+        '접수중': 'warning',
+        '발주진행': 'primary',
+        '발주완료(납기확인)': 'success',
+        '발주완료(납기미정)': 'info',
+        '처리완료': 'success',
+        '접수취소': 'secondary'
+      };
+      return colors[status] || 'secondary';
+    }
+
+    // 날짜/시간 포맷팅
+    function formatDateTime(dateString) {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      return date.toLocaleString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    }
+
+    // 신청 취소
+    async function cancelRequest() {
+      if (!confirm('정말 신청을 취소하시겠습니까?')) {
+        return;
+      }
+
+      try {
+        const sessionToken = getSessionToken();
+        showLoading('취소 처리 중...');
+
+        const result = await callServer('cancelRequest', currentRequest.requestNo, sessionToken);
+
+        if (result.success) {
+          showToast('신청이 취소되었습니다.', 'success');
+          setTimeout(() => {
+            goBack();
+          }, 2000);
+        } else {
+          showToast('취소 실패: ' + result.message, 'danger');
+        }
+
+      } catch (error) {
+        showToast('취소 처리 중 오류: ' + error.message, 'danger');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // 수령 확인
+    async function confirmReceipt() {
+      if (!confirm('부품을 수령하셨습니까?\n수령 확인 후에는 처리완료 상태로 변경됩니다.')) {
+        return;
+      }
+
+      try {
+        const sessionToken = getSessionToken();
+        showLoading('수령 확인 처리 중...');
+
+        const result = await callServer('confirmReceipt', currentRequest.requestNo, sessionToken);
+
+        if (result.success) {
+          showToast('수령 확인이 완료되었습니다.', 'success');
+          // 상세 정보 새로고침
+          window.location.reload();
+        } else {
+          showToast('수령 확인 실패: ' + result.message, 'danger');
+        }
+
+      } catch (error) {
+        showToast('수령 확인 중 오류: ' + error.message, 'danger');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Google Drive URL을 이미지로 표시 가능한 URL로 변환
+    function convertDriveUrlToImage(url) {
+      if (!url || !url.includes('drive.google.com')) {
+        return url;
+      }
+      
+      // 파일 ID 추출
+      let fileId = null;
+      
+      // 형식 1: /file/d/FILE_ID/view
+      const match1 = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (match1) {
+        fileId = match1[1];
+      }
+      
+      // 형식 2: ?id=FILE_ID
+      if (!fileId) {
+        const match2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (match2) {
+          fileId = match2[1];
+        }
+      }
+      
+      if (fileId) {
+        // 이미지로 표시 가능한 URL로 변환
+        return 'https://drive.google.com/uc?export=view&id=' + fileId;
+      }
+      
+      return url;
+    }
+    
+    // Google Drive URL을 다운로드 가능한 URL로 변환
+    function convertDriveUrlToDownload(url) {
+      if (!url || !url.includes('drive.google.com')) {
+        return url;
+      }
+      
+      // 파일 ID 추출
+      let fileId = null;
+      
+      // 형식 1: /file/d/FILE_ID/view
+      const match1 = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (match1) {
+        fileId = match1[1];
+      }
+      
+      // 형식 2: ?id=FILE_ID
+      if (!fileId) {
+        const match2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if (match2) {
+          fileId = match2[1];
+        }
+      }
+      
+      if (fileId) {
+        // 다운로드 가능한 URL로 변환
+        return 'https://drive.google.com/uc?export=download&id=' + fileId;
+      }
+      
+      return url;
+    }
+
+    // 이미지 Blob 캐시
+    let cachedImageBlob = null;
+    let cachedImageUrl = null;
+    
+    // 이미지 미리 로드 (원본 URL을 받아서 처리)
+    async function preloadImageForCopy(originalUrl) {
+      try {
+        const sessionToken = getSessionToken();
+        
+        // Google Drive 이미지인 경우 서버를 통해 가져오기
+        if (originalUrl && originalUrl.includes('drive.google.com')) {
+          const result = await callServer('getImageAsBase64', originalUrl, sessionToken);
+          
+          if (!result || !result.success) {
+            throw new Error(result?.error || '이미지를 가져오는데 실패했습니다.');
+          }
+          
+          // Base64 Data URL을 Blob으로 변환
+          const response = await fetch(result.dataUrl);
+          cachedImageBlob = await response.blob();
+          cachedImageUrl = originalUrl;
+          console.log('Image preloaded successfully for copy');
+          return cachedImageBlob;
+        }
+        
+        // 일반 이미지 URL인 경우 직접 fetch
+        const response = await fetch(originalUrl, {
+          mode: 'cors',
+          credentials: 'omit'
+        });
+        
+        if (!response.ok) {
+          throw new Error('HTTP error! status: ' + response.status);
+        }
+        
+        cachedImageBlob = await response.blob();
+        cachedImageUrl = originalUrl;
+        
+        if (!cachedImageBlob.type.startsWith('image/')) {
+          throw new Error('Not an image file');
+        }
+        
+        return cachedImageBlob;
+        
+      } catch (error) {
+        console.error('Image preload failed:', error);
+        cachedImageBlob = null;
+        cachedImageUrl = null;
+        return null;
+      }
+    }
+    
+    // 이미지 클릭 복사 기능 (좌클릭/우클릭 모두 지원)
+    async function copyImageToClipboard(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      const img = event.target;
+      if (!img || !img.src) {
+        showToast('복사할 이미지가 없습니다.', 'warning');
+        return;
+      }
+      
+      // 원본 URL 찾기 (photoLink에서 가져오거나 img의 data-original-url 속성 사용)
+      let originalUrl = img.getAttribute('data-original-url');
+      if (!originalUrl) {
+        // photoLink에서 원본 URL 가져오기
+        const photoLink = document.getElementById('photoLink');
+        if (photoLink && photoLink.href) {
+          originalUrl = photoLink.href;
+        } else {
+          originalUrl = img.src;
+        }
+      }
+      
+      // 캐시된 이미지가 없거나 URL이 변경된 경우 미리 로드
+      if (!cachedImageBlob || cachedImageUrl !== originalUrl) {
+        showToast('이미지를 준비하는 중...', 'info');
+        const blob = await preloadImageForCopy(originalUrl);
+        if (!blob) {
+          showToast('이미지를 불러오는데 실패했습니다.', 'danger');
+          return;
+        }
+      }
+      
+      // 사용자 제스처와 직접 연결된 클립보드 접근
+      try {
+        // 클립보드 접근을 사용자 제스처와 직접 연결
+        const item = new ClipboardItem({ [cachedImageBlob.type]: cachedImageBlob });
+        await navigator.clipboard.write([item]);
+        
+        showToast('이미지가 클립보드에 복사되었습니다!', 'success');
+        
+      } catch (error) {
+        console.error('Clipboard write failed:', error);
+        
+        // 대체 방법: 이미지 URL 복사
+        try {
+          await navigator.clipboard.writeText(originalUrl);
+          showToast('이미지 URL이 클립보드에 복사되었습니다.', 'info');
+        } catch (urlError) {
+          console.error('URL copy also failed:', urlError);
+          showToast('이미지 복사에 실패했습니다. 페이지를 클릭한 후 다시 시도해주세요.', 'warning');
+        }
+      }
+    }
+
+    async function goBack() {
+      try {
+        console.log('goBack: Starting...');
+        const sessionToken = getSessionToken();
+        const baseUrl = await callServer('getWebAppUrl');
+        
+        if (!baseUrl) {
+          window.location.href = '?page=my-requests&token=' + encodeURIComponent(sessionToken);
+          return;
+        }
+        
+        const targetUrl = baseUrl + '?page=my-requests&token=' + encodeURIComponent(sessionToken);
+        console.log('Navigating to:', targetUrl);
+        
+        if (window.top && window.top !== window) {
+          window.top.location.href = targetUrl;
+        } else {
+          window.location.href = targetUrl;
+        }
+      } catch (error) {
+        console.error('goBack error:', error);
+        window.location.href = '?page=my-requests';
+      }
+    }
+  </script>
+</body>
+</html>
+
+
