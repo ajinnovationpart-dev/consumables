@@ -20,13 +20,15 @@ function getToken() {
 
 export async function api(path, options = {}) {
   const token = getToken();
+  const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
   };
   if (token) headers.Authorization = `Bearer ${token}`;
+  // ngrok 무료 플랜: 브라우저 경고 페이지 건너뛰고 실제 API 응답 받기
+  if (url.includes('ngrok')) headers['ngrok-skip-browser-warning'] = 'true';
 
-  const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
   const res = await fetch(url, { ...options, headers });
   const data = await res.json().catch(() => ({}));
 
