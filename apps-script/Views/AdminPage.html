@@ -38,15 +38,20 @@
   </style>
 </head>
 <body>
-  <!-- 헤더 -->
+  <!-- 헤더: 관리자 공통 네비 -->
   <nav class="navbar navbar-dark bg-primary mb-3">
     <div class="container-fluid px-2">
-      <span class="navbar-brand mb-0">🏠 부품발주 (관리자)</span>
-      <div class="d-flex align-items-center">
-        <span class="text-white d-none d-md-inline me-2 small">
-          👤 <span id="headerUserName"></span>
-        </span>
-        <button class="btn btn-sm btn-outline-light" onclick="goBack()">← 뒤로</button>
+      <span class="navbar-brand mb-0">🏠 부품발주시스템</span>
+      <div class="d-flex align-items-center flex-wrap gap-1">
+        <a href="#" class="text-white text-decoration-none small me-2" onclick="navigateTo('admin-dashboard'); return false;">관리자 대시보드</a>
+        <span class="text-white opacity-75 d-none d-md-inline">|</span>
+        <a href="#" class="text-white text-decoration-none small me-2 fw-bold" onclick="navigateTo('admin-requests'); return false;">전체 신청</a>
+        <span class="text-white opacity-75 d-none d-md-inline">|</span>
+        <a href="#" class="text-white text-decoration-none small me-2" onclick="navigateTo('admin-statistics'); return false;">통계 및 리포트</a>
+        <span class="text-white opacity-75 d-none d-md-inline">|</span>
+        <a href="#" class="text-white text-decoration-none small me-2" onclick="navigateTo('admin-master'); return false;">⚙️ 기준정보 등록/관리</a>
+        <span class="text-white d-none d-md-inline me-2 small">👤 <span id="headerUserName"></span></span>
+        <button class="btn btn-sm btn-outline-light" onclick="logout()">로그아웃</button>
       </div>
     </div>
   </nav>
@@ -54,32 +59,37 @@
   <div class="container-fluid px-2 mt-2">
     <h2 class="h4 mb-3">📋 전체 신청 목록</h2>
     
-    <!-- 필터 -->
-    <div class="filter-section mb-3">
-      <div class="row g-2">
-        <div class="col-12 col-md-6 col-lg-3">
-          <label class="form-label small">상태</label>
-          <select class="form-select" id="filterStatus">
-            <option value="">전체 상태</option>
-          </select>
-        </div>
-        <div class="col-12 col-md-6 col-lg-3">
-          <label class="form-label small">지역</label>
-          <select class="form-select" id="filterRegion">
-            <option value="">전체 지역</option>
-          </select>
-        </div>
-        <div class="col-12 col-md-6 col-lg-3">
-          <label class="form-label small">시작일</label>
-          <input type="date" class="form-control" id="filterDateFrom">
-        </div>
-        <div class="col-12 col-md-6 col-lg-3">
-          <label class="form-label small">종료일</label>
-          <input type="date" class="form-control" id="filterDateTo">
-        </div>
-        <div class="col-md-12">
-          <button class="btn btn-primary" onclick="applyFilter()">필터 적용</button>
-          <button class="btn btn-secondary" onclick="resetFilter()">초기화</button>
+    <!-- 조회 조건 (항상 노출) -->
+    <div class="card mb-4 border-primary">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">🔍 조회 조건</h5>
+      </div>
+      <div class="card-body filter-section">
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-md-6 col-lg-3">
+            <label class="form-label fw-semibold">상태</label>
+            <select class="form-select" id="filterStatus">
+              <option value="">전체 상태</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-6 col-lg-3">
+            <label class="form-label fw-semibold">지역</label>
+            <select class="form-select" id="filterRegion">
+              <option value="">전체 지역</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-6 col-lg-3">
+            <label class="form-label fw-semibold">시작일</label>
+            <input type="date" class="form-control" id="filterDateFrom">
+          </div>
+          <div class="col-12 col-md-6 col-lg-3">
+            <label class="form-label fw-semibold">종료일</label>
+            <input type="date" class="form-control" id="filterDateTo">
+          </div>
+          <div class="col-12 col-md-12">
+            <button class="btn btn-primary" onclick="applyFilter()">🔍 조회</button>
+            <button class="btn btn-outline-secondary ms-2" onclick="resetFilter()">초기화</button>
+          </div>
         </div>
       </div>
     </div>
@@ -661,27 +671,32 @@
       }
     }
     
-    // 뒤로가기
-    async function goBack() {
+    async function navigateTo(page) {
       try {
         const sessionToken = getSessionToken();
         const baseUrl = await callServer('getWebAppUrl');
-        if (!baseUrl) {
-          window.location.href = '?page=admin-dashboard';
-          return;
-        }
-        
-        const targetUrl = baseUrl + '?page=admin-dashboard&token=' + encodeURIComponent(sessionToken);
-        
-        if (window.top && window.top !== window) {
-          window.top.location.href = targetUrl;
-        } else {
-          window.location.href = targetUrl;
-        }
-      } catch (error) {
-        console.error('goBack error:', error);
-        window.location.href = '?page=admin-dashboard';
+        const targetUrl = baseUrl ? baseUrl + '?page=' + page + '&token=' + encodeURIComponent(sessionToken) : '?page=' + page;
+        if (window.top && window.top !== window) window.top.location.href = targetUrl;
+        else window.location.href = targetUrl;
+      } catch (e) {
+        console.error('navigateTo error:', e);
+        window.location.href = '?page=' + page;
       }
+    }
+    function logout() {
+      if (!confirm('로그아웃하시겠습니까?')) return;
+      try {
+        const sessionToken = getSessionToken();
+        if (sessionToken) callServer('logout', sessionToken).catch(function() {});
+      } catch (e) {}
+      sessionStorage.removeItem('sessionToken');
+      sessionStorage.removeItem('currentUser');
+      sessionStorage.removeItem('adminStatusFilter');
+      if (window.top && window.top !== window) window.top.location.href = '?page=login';
+      else window.location.href = '?page=login';
+    }
+    async function goBack() {
+      await navigateTo('admin-dashboard');
     }
   </script>
 </body>

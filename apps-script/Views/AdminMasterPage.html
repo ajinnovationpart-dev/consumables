@@ -38,15 +38,19 @@
   </style>
 </head>
 <body>
-  <!-- 헤더 -->
+  <!-- 헤더: 관리자 공통 네비 -->
   <nav class="navbar navbar-dark bg-primary mb-3">
     <div class="container-fluid px-2">
-      <span class="navbar-brand mb-0">⚙️ 기준정보 관리</span>
+      <span class="navbar-brand mb-0">🏠 부품발주시스템</span>
       <div class="d-flex align-items-center flex-wrap gap-1">
-        <span class="text-white d-none d-md-inline me-2 small">
-          👤 <span id="headerUserName"></span>
-        </span>
-        <button class="btn btn-sm btn-outline-light" onclick="goBack()">뒤로</button>
+        <a href="#" class="text-white text-decoration-none small me-2" onclick="navigateTo('admin-dashboard'); return false;">관리자 대시보드</a>
+        <span class="text-white opacity-75 d-none d-md-inline">|</span>
+        <a href="#" class="text-white text-decoration-none small me-2" onclick="navigateTo('admin-requests'); return false;">전체 신청</a>
+        <span class="text-white opacity-75 d-none d-md-inline">|</span>
+        <a href="#" class="text-white text-decoration-none small me-2" onclick="navigateTo('admin-statistics'); return false;">통계 및 리포트</a>
+        <span class="text-white opacity-75 d-none d-md-inline">|</span>
+        <a href="#" class="text-white text-decoration-none small me-2 fw-bold" onclick="return false;">⚙️ 기준정보 등록/관리</a>
+        <span class="text-white d-none d-md-inline me-2 small">👤 <span id="headerUserName"></span></span>
         <button class="btn btn-sm btn-outline-light" onclick="logout()">로그아웃</button>
       </div>
     </div>
@@ -743,10 +747,12 @@
       modal.show();
     }
 
-    // 뒤로가기
-    function goBack() {
+    function navigateTo(page) {
       const sessionToken = getSessionToken();
-      window.location.href = '?page=admin-dashboard&token=' + sessionToken;
+      window.location.href = '?page=' + page + (sessionToken ? '&token=' + encodeURIComponent(sessionToken) : '');
+    }
+    function goBack() {
+      navigateTo('admin-dashboard');
     }
 
     // 로그아웃

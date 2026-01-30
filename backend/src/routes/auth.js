@@ -21,7 +21,9 @@ router.get('/me', authMiddleware, (req, res) => {
       userId: req.user.userId,
       name: req.user.name,
       role: req.user.role,
-      team: req.user.team,
+      team: req.user.team ?? '',
+      region: req.user.region ?? '',
+      employeeCode: req.user.employeeCode ?? '',
     },
   });
 });

@@ -25,18 +25,21 @@ export default function Layout({ children }) {
           <Link to={isAdmin ? '/admin' : '/dashboard'} style={{ color: 'inherit', textDecoration: 'none', fontWeight: 'var(--aj-font-weight-bold)', fontSize: 'var(--aj-font-size-xl)' }}>
             부품발주시스템
           </Link>
-          <nav className="d-flex gap-2 align-items-center">
+          <nav className="d-flex gap-2 align-items-center flex-wrap" style={{ gap: '0.5rem 1rem' }}>
             {!isAdmin && (
               <>
                 <Link to="/dashboard" style={{ color: 'inherit', textDecoration: 'none' }}>대시보드</Link>
                 <Link to="/new-request" style={{ color: 'inherit', textDecoration: 'none' }}>신규 신청</Link>
                 <Link to="/my-requests" style={{ color: 'inherit', textDecoration: 'none' }}>내 신청</Link>
+                <Link to="/my-info" style={{ color: 'inherit', textDecoration: 'none' }}>내 정보</Link>
               </>
             )}
             {isAdmin && (
               <>
                 <Link to="/admin" style={{ color: 'inherit', textDecoration: 'none' }}>관리자 대시보드</Link>
                 <Link to="/admin/requests" style={{ color: 'inherit', textDecoration: 'none' }}>전체 신청</Link>
+                <Link to="/admin/statistics" style={{ color: 'inherit', textDecoration: 'none' }}>통계 및 리포트</Link>
+                <Link to="/admin/master" style={{ color: 'inherit', textDecoration: 'none', whiteSpace: 'nowrap', fontWeight: 600 }}>⚙️ 기준정보 등록/관리</Link>
               </>
             )}
             <span style={{ fontSize: 'var(--aj-font-size-sm)' }}>{user?.name} ({user?.role})</span>

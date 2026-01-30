@@ -96,8 +96,10 @@ export async function updateStatus(requestNo, newStatus, remarks, user) {
 }
 
 export async function getMyRequests(userId) {
-  const list = await storage.getRequests({ requesterEmail: userId });
-  return list.map((r) => ({
+  const uid = String(userId || '').trim();
+  const list = await storage.getRequests({});
+  const filtered = list.filter((r) => String(r.requesterEmail || '').trim() === uid);
+  return filtered.map((r) => ({
     ...r,
     canCancel: r.status === config.status.REQUESTED,
     canConfirmReceipt:
@@ -105,10 +107,49 @@ export async function getMyRequests(userId) {
   }));
 }
 
-export async function getDashboardData(user) {
+/** 날짜 문자열을 YYYY-MM-DD로 정규화 (Excel/API 혼합 형식 대응) */
+function toDateOnly(str) {
+  if (!str) return '';
+  const s = String(str).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  const parts = s.split(/[\s.\-/]+/).filter(Boolean);
+  if (parts.length >= 3) {
+    const y = parts[0].padStart(4, '0');
+    const m = parts[1].padStart(2, '0');
+    const d = parts[2].padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  return s.slice(0, 10);
+}
+
+export async function getDashboardData(user, options = {}) {
+  let { startDate, endDate } = options;
   const list = await storage.getRequests({});
   const isAdmin = user.role === config.roles.ADMIN;
-  const filtered = isAdmin ? list : list.filter((r) => r.requesterEmail === user.userId);
+  const userId = String(user.userId || '').trim();
+  let filtered = isAdmin ? list : list.filter((r) => String(r.requesterEmail || '').trim() === userId);
+
+  if (!startDate || !endDate) {
+    const now = new Date();
+    endDate = endDate || now.toISOString().slice(0, 10);
+    const first = new Date(now.getFullYear(), now.getMonth(), 1);
+    startDate = startDate || first.toISOString().slice(0, 10);
+  }
+
+  // 기간 필터 (관리자 대시보드 조회 기간)
+  let periodFiltered = filtered;
+  if (startDate && endDate && filtered.length) {
+    periodFiltered = filtered.filter((r) => {
+      const d = toDateOnly(r.requestDate);
+      return d >= startDate && d <= endDate;
+    });
+  }
+
+  const requestedCount = periodFiltered.filter((r) => r.status === config.status.REQUESTED).length;
+  const orderingCount = periodFiltered.filter((r) => r.status === config.status.ORDERING).length;
+  const completedPendingCount = periodFiltered.filter((r) => r.status === config.status.COMPLETED_PENDING).length;
+  const completedConfirmedCount = periodFiltered.filter((r) => r.status === config.status.COMPLETED_CONFIRMED).length;
+  const finishedCount = periodFiltered.filter((r) => r.status === config.status.FINISHED).length;
 
   const stats = {
     total: filtered.length,
@@ -119,8 +160,47 @@ export async function getDashboardData(user) {
     ).length,
     finished: filtered.filter((r) => r.status === config.status.FINISHED).length,
     cancelled: filtered.filter((r) => r.status === config.status.CANCELLED).length,
+    period: {
+      new: requestedCount,
+      requested: requestedCount,
+      inProgress: orderingCount + completedPendingCount + completedConfirmedCount,
+      delayed: periodFiltered.filter((r) => r.status === config.status.COMPLETED_PENDING).length,
+      completed: finishedCount,
+      total: periodFiltered.length,
+    },
   };
 
   const recent = filtered.slice(0, 10);
-  return { stats, recent, requests: filtered };
+
+  // 긴급: 접수중 + 신청일이 1일 이상 지난 건
+  const oneDayAgo = new Date();
+  oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+  const oneDayAgoStr = oneDayAgo.toISOString().slice(0, 10);
+  const urgent = filtered.filter((r) => {
+    if (r.status !== config.status.REQUESTED || !r.requestDate) return false;
+    const d = toDateOnly(r.requestDate);
+    return d < oneDayAgoStr;
+  });
+
+  // 지연: 발주진행 + 발주일이 3일 이상 지난 건
+  const threeDaysAgo = new Date();
+  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+  const threeDaysAgoStr = threeDaysAgo.toISOString().slice(0, 10);
+  const delayed = filtered
+    .filter((r) => {
+      if (r.status !== config.status.ORDERING || !r.orderDate) return false;
+      const d = toDateOnly(r.orderDate);
+      return d && d < threeDaysAgoStr;
+    })
+    .map((r) => {
+      const orderDateStr = toDateOnly(r.orderDate);
+      const orderDate = orderDateStr ? new Date(orderDateStr) : null;
+      const delayDays =
+        orderDate && !Number.isNaN(orderDate.getTime())
+          ? Math.floor((Date.now() - orderDate.getTime()) / (1000 * 60 * 60 * 24))
+          : 0;
+      return { ...r, delayDays };
+    });
+
+  return { stats, recent, urgent, delayed, requests: filtered };
 }

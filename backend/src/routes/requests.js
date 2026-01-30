@@ -19,7 +19,9 @@ router.get('/my', async (req, res) => {
 
 router.get('/dashboard', async (req, res) => {
   try {
-    const data = await requestService.getDashboardData(req.user);
+    const startDate = req.query.startDate || null;
+    const endDate = req.query.endDate || null;
+    const data = await requestService.getDashboardData(req.user, { startDate, endDate });
     res.json(data);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -31,7 +33,9 @@ router.get('/all', async (req, res) => {
     if (req.user.role !== config.roles.ADMIN) {
       return res.status(403).json({ success: false, message: '관리자만 접근할 수 있습니다.' });
     }
-    const list = await storage.getRequests({});
+    const filter = {};
+    if (req.query.status) filter.status = req.query.status;
+    const list = await storage.getRequests(filter);
     res.json(list);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

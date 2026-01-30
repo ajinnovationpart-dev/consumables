@@ -9,6 +9,9 @@ import MyRequests from './pages/MyRequests';
 import RequestDetail from './pages/RequestDetail';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminRequests from './pages/AdminRequests';
+import AdminMaster from './pages/AdminMaster';
+import AdminStatistics from './pages/AdminStatistics';
+import MyInfo from './pages/MyInfo';
 
 function PrivateRoute({ children, adminOnly }) {
   const { user, loading } = useAuth();
@@ -63,6 +66,14 @@ export default function App() {
         }
       />
       <Route
+        path="/my-info"
+        element={
+          <PrivateRoute>
+            <Layout><MyInfo /></Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
         path="/request/:requestNo"
         element={
           <PrivateRoute>
@@ -83,6 +94,22 @@ export default function App() {
         element={
           <PrivateRoute adminOnly>
             <Layout><AdminRequests /></Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/master"
+        element={
+          <PrivateRoute adminOnly>
+            <Layout><AdminMaster /></Layout>
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/statistics"
+        element={
+          <PrivateRoute adminOnly>
+            <Layout><AdminStatistics /></Layout>
           </PrivateRoute>
         }
       />

@@ -104,7 +104,17 @@ npm run build
 | GitHub | **Settings → Secrets → Actions**: `VITE_API_URL` = `https://ngrok-url/api` 추가 |
 | GitHub | `main` 브랜치에 push → 자동 빌드·배포 |
 
-## 5. 요약
+## 5. 직접 URL 접속 시 안 될 때 (예: /admin/requests)
+
+- **증상**: `https://user.github.io/consumables/admin/requests` 처럼 직접 주소로 들어가면 404 또는 빈 화면.
+- **원인**: GitHub Pages는 실제 파일만 서비스하므로 `/consumables/admin/requests` 경로에 파일이 없으면 404.html이 뜨고, 그다음 base(`/consumables/`)로 리다이렉트된 뒤 SPA가 `sessionStorage`에 저장된 경로로 이동해야 함. 이 과정이 정상이려면 **빌드 시 base가 `/consumables/`로 되어 있어야** asset 경로가 맞음.
+- **확인·조치**:
+  1. **Settings → Pages → Build and deployment**: Source가 **GitHub Actions**인지 확인.
+  2. **main 브랜치에 최신 코드 push** 후 Actions 탭에서 "Deploy Frontend to GitHub Pages" 워크플로가 성공했는지 확인.
+  3. 브라우저 **캐시 비우기** 또는 **시크릿 창**으로 `https://user.github.io/consumables/` 접속 후, 메뉴에서 `/admin/requests`로 이동해 보기.
+  4. 로컬에서 수동 빌드해 dist를 올리는 경우, 반드시 **base가 `/consumables/`인 상태로** 빌드했는지 확인 (프로젝트의 `vite.config.js`는 빌드 시 기본 base를 `/consumables/`로 사용함).
+
+## 6. 요약
 
 - **로컬(OneDrive + 백엔드)** + **GitHub(프론트)** 구조로 갈 수 있음.
 - 프론트는 GitHub Pages, 백엔드는 OneDrive 있는 PC에서 실행.

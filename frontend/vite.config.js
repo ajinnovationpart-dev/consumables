@@ -30,8 +30,8 @@ function spa404Plugin() {
 
 export default defineConfig({
   plugins: [react(), spa404Plugin()],
-  // GitHub Pages 서브경로 배포 시 (예: user.github.io/repo/)
-  base: process.env.VITE_BASE_PATH || '/',
+  // GitHub Pages 서브경로 배포 시 (예: user.github.io/repo/) — 빌드 시 기본값 /consumables/ 로 통일
+  base: process.env.VITE_BASE_PATH || (process.env.NODE_ENV === 'production' ? '/consumables/' : '/'),
   server: {
     port: 5173,
     proxy: {

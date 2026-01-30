@@ -131,7 +131,7 @@ export async function getRequests(filter = {}) {
   if (filter.requesterEmail) list = list.filter((r) => r.requesterEmail === filter.requesterEmail);
   if (filter.status) list = list.filter((r) => r.status === filter.status);
   if (filter.assetNo) list = list.filter((r) => String(r.assetNo).trim() === String(filter.assetNo).trim());
-  list.sort((a, b) => (b.requestDate || '').localeCompare(a.requestDate || ''));
+  list.sort((a, b) => String(b.requestDate ?? '').localeCompare(String(a.requestDate ?? '')));
   return list;
 }
 

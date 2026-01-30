@@ -39,15 +39,20 @@
   </style>
 </head>
 <body>
-  <!-- 헤더 -->
+  <!-- 헤더: 관리자 공통 네비 -->
   <nav class="navbar navbar-dark bg-primary mb-3">
     <div class="container-fluid px-2">
-      <span class="navbar-brand mb-0">🏠 부품발주 (관리자)</span>
-      <div class="d-flex align-items-center">
-        <span class="text-white d-none d-md-inline me-2 small">
-          👤 <span id="headerUserName"></span>
-        </span>
-        <button class="btn btn-sm btn-outline-light" onclick="goBack()">← 뒤로</button>
+      <span class="navbar-brand mb-0">🏠 부품발주시스템</span>
+      <div class="d-flex align-items-center flex-wrap gap-1">
+        <a href="#" class="text-white text-decoration-none small me-2" onclick="navigateTo('admin-dashboard'); return false;">관리자 대시보드</a>
+        <span class="text-white opacity-75 d-none d-md-inline">|</span>
+        <a href="#" class="text-white text-decoration-none small me-2" onclick="navigateTo('admin-requests'); return false;">전체 신청</a>
+        <span class="text-white opacity-75 d-none d-md-inline">|</span>
+        <a href="#" class="text-white text-decoration-none small me-2 fw-bold" onclick="return false;">📈 통계 및 리포트</a>
+        <span class="text-white opacity-75 d-none d-md-inline">|</span>
+        <a href="#" class="text-white text-decoration-none small me-2" onclick="navigateTo('admin-master'); return false;">⚙️ 기준정보 등록/관리</a>
+        <span class="text-white d-none d-md-inline me-2 small">👤 <span id="headerUserName"></span></span>
+        <button class="btn btn-sm btn-outline-light" onclick="logout()">로그아웃</button>
       </div>
     </div>
   </nav>
@@ -55,8 +60,11 @@
   <div class="container-fluid px-2 mt-2">
     <h2 class="h4 mb-3">📈 통계 및 리포트</h2>
 
-    <!-- 기간 선택 -->
-    <div class="card mb-4">
+    <!-- 조회 기간 -->
+    <div class="card mb-4 border-primary">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">🔍 조회 기간</h5>
+      </div>
       <div class="card-body">
         <div class="row g-3 align-items-end">
           <div class="col-md-3">
@@ -711,28 +719,23 @@
       // TODO: 실제 Excel 생성 로직 구현
     }
 
-    // 뒤로가기
-    async function goBack() {
+    async function navigateTo(page) {
       try {
         const sessionToken = getSessionToken();
         const baseUrl = await callServer('getWebAppUrl');
-        if (!baseUrl) {
-          window.location.href = '?page=admin-dashboard';
-          return;
-        }
-        
-        const targetUrl = baseUrl + '?page=admin-dashboard&token=' + encodeURIComponent(sessionToken);
-        
-        if (window.top && window.top !== window) {
-          window.top.location.href = targetUrl;
-        } else {
-          window.location.href = targetUrl;
-        }
-      } catch (error) {
-        console.error('goBack error:', error);
-        window.location.href = '?page=admin-dashboard';
-      }
+        const targetUrl = baseUrl ? baseUrl + '?page=' + page + '&token=' + encodeURIComponent(sessionToken) : '?page=' + page;
+        if (window.top && window.top !== window) window.top.location.href = targetUrl;
+        else window.location.href = targetUrl;
+      } catch (e) { window.location.href = '?page=' + page; }
     }
+    function logout() {
+      if (!confirm('로그아웃하시겠습니까?')) return;
+      try { if (getSessionToken()) callServer('logout', getSessionToken()).catch(function() {}); } catch (e) {}
+      sessionStorage.removeItem('sessionToken'); sessionStorage.removeItem('currentUser');
+      if (window.top && window.top !== window) window.top.location.href = '?page=login';
+      else window.location.href = '?page=login';
+    }
+    async function goBack() { await navigateTo('admin-dashboard'); }
 
     console.log('✓ AdminStatisticsPage script loaded');
   </script>
