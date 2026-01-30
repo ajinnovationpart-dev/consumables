@@ -1,3 +1,9 @@
+<!--
+  목적: 로컬(OneDrive+백엔드) + GitHub(프론트) 구성의 전체 가이드.
+        로컬 OneDrive 폴더·Excel·첨부 파일 설정과 GitHub Pages 배포를 한 문서로 통합.
+  관련: 상세 체크리스트·문제 발생 시 → docs/CHECKLIST.md
+-->
+
 # 로컬(OneDrive+백엔드) + GitHub(프론트) 구조
 
 프론트는 **GitHub Pages**에, 백엔드와 데이터는 **로컬 PC(OneDrive)** 에 두는 구성입니다.
@@ -16,6 +22,56 @@
 
 - **로컬 PC**: Node 백엔드 실행 + OneDrive 폴더(Excel, 첨부 파일) 접근
 - **GitHub**: 프론트엔드 코드 저장 + GitHub Pages로 정적 배포
+
+## 0. 로컬 OneDrive + Excel 상세 (폴더·환경변수·Excel 준비)
+
+<!-- 로컬 데이터 경로와 Excel/첨부 파일 구조. 다른 경로 사용 시 .env 에서 변경. -->
+
+### 폴더 구조 (Windows 예시)
+
+```
+C:\Users\User\OneDrive - AJ네트웍스\소모품발주\
+  ├── 소모품발주.xlsx      ← 데이터 (신청내역, 사용자관리, 코드관리, 배송지관리, 로그 시트)
+  └── 첨부 파일\           ← 신청번호별 이미지 폴더
+      ├── 2501010001\      ← 신청번호 폴더
+      │   ├── 2501010001_1735123456789.jpg
+      │   └── ...
+      ├── 2501010002\
+      └── ...
+```
+
+- **소모품발주.xlsx**: 하나의 Excel 파일에 시트별로 데이터 저장 (`신청내역`, `사용자관리`, `코드관리`, `배송지관리`, `로그`)
+- **첨부 파일**: 신청 시 업로드한 이미지는 `첨부 파일\{신청번호}\` 아래에 저장됨
+
+### 폴더 생성
+
+- `C:\Users\User\OneDrive - AJ네트웍스\소모품발주` (다른 경로 사용 시 아래 `.env`의 `LOCAL_ONEDRIVE_PATH`로 지정)
+
+### 백엔드 환경 변수 (.env)
+
+`backend/` 디렉터리에 `.env` 파일 생성 후:
+
+```env
+LOCAL_ONEDRIVE_PATH=C:\Users\User\OneDrive - AJ네트웍스\소모품발주
+EXCEL_FILE=소모품발주.xlsx
+ATTACHMENTS_FOLDER=첨부 파일
+PORT=3030
+JWT_SECRET=비밀키-프로덕션에서-변경
+JWT_EXPIRES_IN=24h
+```
+
+- `LOCAL_ONEDRIVE_PATH`: 소모품발주 폴더 전체 경로
+- `EXCEL_FILE`: 그 안의 Excel 파일명 (기본: `소모품발주.xlsx`)
+- `ATTACHMENTS_FOLDER`: 이미지 저장 폴더명 (기본: `첨부 파일`)
+
+### Excel 파일 준비
+
+- **소모품발주.xlsx**가 없으면: 백엔드 첫 실행 시 위 경로에 자동 생성 (시트: 신청내역, 사용자관리, 코드관리, 배송지관리, 로그)
+- 기존 파일 사용 시: 같은 폴더에 두고 `EXCEL_FILE` 이름·시트 이름(`신청내역`, `사용자관리` 등) 맞출 것
+
+### 첨부 파일(이미지) 저장 규칙
+
+- 신청 이미지는 **첨부 파일\{신청번호}\** 아래에 `{신청번호}_타임스탬프.jpg` 형태로 저장됨
 
 ## 1. 로컬에서 할 일
 
@@ -45,10 +101,10 @@ npm run dev
 
 ```bash
 ngrok http 3030
-# Forwarding  https://abc123.ngrok-free.app -> http://localhost:3030
+# Forwarding  https://conglomeratic-christena-unstraight.ngrok-free.dev -> http://localhost:3030
 ```
 
-→ 프론트 빌드 시 `VITE_API_URL=https://abc123.ngrok-free.app/api` 로 설정 (아래 참고).
+→ 프론트 빌드 시 `VITE_API_URL=https://conglomeratic-christena-unstraight.ngrok-free.dev` 로 설정 (끝에 `/api` 없어도 자동 보정됨).
 
 ## 2. 프론트엔드 (GitHub Pages 배포)
 
@@ -60,8 +116,8 @@ ngrok http 3030
 2. **Settings → Secrets and variables → Actions**
    - **New repository secret** 추가:
      - Name: `VITE_API_URL`
-     - Value: 백엔드 공개 URL (예: `https://xxxx.ngrok-free.app/api`)  
-       → 로컬 백엔드를 ngrok 등으로 공개한 URL, **반드시 `/api` 포함**
+     - Value: 백엔드 공개 URL, **끝에 `/api` 포함 권장** (예: `https://conglomeratic-christena-unstraight.ngrok-free.dev/api`)  
+       → `/api` 없어도 프론트에서 보정하지만, 배포 빌드가 오래된 경우 404가 나므로 **Secret에는 `/api` 포함** 후 워크플로 다시 실행.
    - (선택) 서브경로 배포 시:
      - Name: `VITE_BASE_PATH`
      - Value: `/{저장소이름}/` (예: `/ordering_consumables/`)
@@ -70,6 +126,14 @@ ngrok http 3030
 
 - `main` 브랜치에 push 하면 `.github/workflows/deploy-pages.yml` 이 실행되어 프론트를 빌드하고 GitHub Pages에 배포합니다.
 - 빌드 시 위에서 넣은 `VITE_API_URL` 이 적용됩니다.
+
+**ngrok 주소가 바뀌었을 때 (기존 링크로 호출되는 CORS/404 해결)**
+
+- GitHub Pages에 배포된 프론트는 **빌드할 때** 사용한 `VITE_API_URL` 이 그대로 박혀 있습니다. ngrok을 다시 켜면 URL이 바뀌므로, **Secret을 새 주소로 바꾼 뒤 다시 빌드**해야 합니다.
+1. **Settings → Secrets and variables → Actions** 에서 `VITE_API_URL` 을 **편집(Update)** 하여 새 ngrok 주소로 변경  
+   (예: `https://conglomeratic-christena-unstraight.ngrok-free.dev`)
+2. **Actions** 탭 → **Deploy Frontend to GitHub Pages** 워크플로 → **Run workflow** (Run workflow 버튼) 로 **한 번 더 빌드·배포** 실행.
+3. 배포가 끝난 뒤, 브라우저에서 **캐시 비우기** 또는 **시크릿 창**으로 `https://ajinnovationpart-dev.github.io/consumables/` 접속 후 로그인 다시 시도.
 
 ### 2-3. 수동 빌드 (로컬에서 빌드 후 배포)
 

@@ -35,7 +35,7 @@ jobs:
 
       - name: Build
         env:
-          # 저장소 Settings → Secrets → VITE_API_URL 설정 (예: https://xxxx.ngrok-free.app/api)
+          # 저장소 Settings → Secrets → VITE_API_URL = 새 ngrok 주소 (예: https://xxx.ngrok-free.dev). 주소 변경 시 Secret 수정 후 이 워크플로 다시 실행 필요.
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           # Pages 주소: https://ajinnovationpart-dev.github.io/consumables/
           VITE_BASE_PATH: '/consumables/'

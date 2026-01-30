@@ -1,6 +1,16 @@
+/**
+ * 프론트엔드 API 클라이언트.
+ * - API_BASE: 로컬 개발 시 '/api'(Vite 프록시), 배포 시 VITE_API_URL (끝에 /api 자동 보정).
+ * - auth, requests, codes, admin, getAttachmentUrl, formatDisplayDate 제공.
+ * - Bearer 토큰·ngrok-skip-browser-warning 헤더 자동 부착.
+ */
 // 로컬 개발: 프록시 사용 → '/api'
-// GitHub Pages 배포: .env.production 에 VITE_API_URL=https://your-backend.example.com/api
-export const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
+// 배포/ngrok: VITE_API_URL=https://xxx.ngrok-free.dev 또는 .../api (미지정 시 /api 붙임)
+const raw = import.meta.env.VITE_API_URL ?? '/api';
+export const API_BASE =
+  typeof raw === 'string' && raw.startsWith('http') && !raw.replace(/\/$/, '').endsWith('/api')
+    ? raw.replace(/\/?$/, '') + '/api'
+    : raw;
 
 /** 첨부 이미지 등 API 기준 절대 URL (GitHub Pages 배포 시 백엔드 도메인 필요) */
 export function getApiOrigin() {
@@ -28,9 +38,19 @@ function getToken() {
   return sessionStorage.getItem('token') || localStorage.getItem('token');
 }
 
+/** 절대 URL일 때 반드시 /api 포함 (배포 빌드에서 VITE_API_URL에 /api 누락 시 대비) */
+function buildUrl(path) {
+  if (path.startsWith('http')) return path;
+  const base = API_BASE.replace(/\/$/, '');
+  const isAbsolute = base.startsWith('http');
+  const hasApi = base.endsWith('/api');
+  if (isAbsolute && !hasApi) return `${base}/api${path.startsWith('/') ? path : '/' + path}`;
+  return `${base}${path.startsWith('/') ? path : '/' + path}`;
+}
+
 export async function api(path, options = {}) {
   const token = getToken();
-  const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+  const url = buildUrl(path);
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
@@ -40,7 +60,16 @@ export async function api(path, options = {}) {
   if (url.includes('ngrok')) headers['ngrok-skip-browser-warning'] = 'true';
 
   const res = await fetch(url, { ...options, headers });
+  const contentType = res.headers.get('content-type') || '';
   const data = await res.json().catch(() => ({}));
+
+  // ngrok 경고 페이지 등 HTML이 오면 JSON이 아님 → 파싱 실패 시 data가 {}
+  if (res.ok && path.includes('/auth/login') && typeof data?.success !== 'boolean') {
+    const err = new Error('서버 응답을 확인할 수 없습니다. ngrok 사용 시 브라우저에서 백엔드 주소를 한 번 열어 "Visit Site" 후 다시 로그인해 보세요.');
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
 
   if (!res.ok) {
     const err = new Error(data.message || res.statusText || '요청 실패');
