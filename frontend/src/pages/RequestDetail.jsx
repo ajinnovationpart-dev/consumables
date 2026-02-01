@@ -90,6 +90,7 @@ export default function RequestDetail() {
             <div className="col-md-6"><strong>신청일시</strong> {request?.requestDate ?? '-'}</div>
             <div className="col-md-6"><strong>상태</strong> <span className="badge" style={{ background: 'var(--aj-gray-200)', color: 'var(--aj-gray-800)' }}>{request?.status ?? '-'}</span></div>
             <div className="col-md-6"><strong>신청자</strong> {request?.requesterName ?? '-'} ({request?.team ?? '-'})</div>
+            <div className="col-md-6"><strong>지역</strong> {request?.region ?? '-'}</div>
           </div>
         </div>
       </div>

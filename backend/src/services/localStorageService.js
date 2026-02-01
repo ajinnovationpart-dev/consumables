@@ -1,3 +1,9 @@
+/**
+ * 로컬 Excel 기반 저장소 서비스.
+ * - 데이터: config의 getExcelPath() 경로의 소모품발주.xlsx (시트: 신청내역, 사용자관리, 코드관리, 배송지관리, 로그).
+ * - 첨부: getAttachmentFolderForRequest(신청번호) 아래 이미지 저장.
+ * - 제공: getRequests, getUsers, getRegions, getTeams, getDeliveryPlaces, createRequest, updateRequest, ensureExcelExists 등.
+ */
 import fs from 'fs/promises';
 import fsSync from 'fs';
 import path from 'path';
@@ -245,6 +251,8 @@ export async function updateUser(userId, data, passwordHash) {
   return true;
 }
 
+const STATUS_NAMES = Object.values(config.status);
+
 export async function getRegions() {
   const excelPath = getExcelPath();
   if (!fsSync.existsSync(excelPath)) return [{ code: 'SEL', name: '서울' }, { code: 'BSN', name: '부산' }];
@@ -258,7 +266,8 @@ export async function getRegions() {
       const row = rows[i];
       if (!row || row.every((c) => c === undefined || c === null || c === '')) continue;
       if (i === 0) continue; // 헤더 행 스킵
-      if (row[2] === 'Y') regions.push({ code: row[0], name: row[1] });
+      const name = String(row[1] ?? '').trim();
+      if (row[2] === 'Y' && name && !STATUS_NAMES.includes(name)) regions.push({ code: row[0], name });
     }
     return regions.length ? regions : [{ code: 'SEL', name: '서울' }, { code: 'BSN', name: '부산' }];
   } catch (err) {

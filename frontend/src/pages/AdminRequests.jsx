@@ -61,9 +61,11 @@ export default function AdminRequests() {
   }, [list, statusFilter, regionFilter, startDate, endDate]);
 
   const handleStatus = async (requestNo, status, remarks = '') => {
-    const rem = status === '접수취소' || status === '처리완료' ? '' : window.prompt('담당자 비고 (선택)');
+    const needRemark = status !== '접수취소' && status !== '처리완료';
+    const rem = needRemark ? window.prompt('담당자 비고 (선택)') : '';
+    if (needRemark && rem === null) return;
     try {
-      await requests.updateStatus(requestNo, status, rem || '');
+      await requests.updateStatus(requestNo, status, rem ?? '');
       setList((prev) => (Array.isArray(prev) ? prev : []).map((r) => (r.requestNo === requestNo ? { ...r, status } : r)));
     } catch (err) {
       alert(err.message);

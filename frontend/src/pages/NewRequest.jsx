@@ -3,6 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { requests, codes } from '../services/api';
 
+/** 주문 상태 값 — 지역 드롭다운에 이게 나오면 API/Excel 오류로 간주하고 기본 지역 사용 */
+const STATUS_VALUES = ['접수중', '발주진행', '발주완료(납기확인)', '발주완료(납기미정)', '처리완료', '접수취소'];
+const DEFAULT_REGIONS = [
+  { code: '서울', name: '서울' }, { code: '부산', name: '부산' }, { code: '대구', name: '대구' },
+  { code: '인천', name: '인천' }, { code: '광주', name: '광주' }, { code: '대전', name: '대전' }, { code: '기타', name: '기타' },
+];
+
 export default function NewRequest() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -26,7 +33,11 @@ export default function NewRequest() {
   });
 
   useEffect(() => {
-    codes.regions().then((res) => setRegions(Array.isArray(res) ? res : [])).catch(() => setRegions([]));
+    codes.regions().then((res) => {
+      const list = Array.isArray(res) ? res : [];
+      const looksLikeStatus = list.some((r) => STATUS_VALUES.includes(String(r?.name ?? '').trim()));
+      setRegions(looksLikeStatus ? DEFAULT_REGIONS : list.length ? list : DEFAULT_REGIONS);
+    }).catch(() => setRegions(DEFAULT_REGIONS));
     if (user?.team) codes.deliveryPlaces(user.team).then((res) => setDeliveryPlaces(Array.isArray(res) ? res : [])).catch(() => setDeliveryPlaces([]));
   }, [user?.team]);
 
