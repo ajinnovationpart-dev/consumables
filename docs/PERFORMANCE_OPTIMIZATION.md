@@ -1,3 +1,8 @@
+<!--
+  목적: 부품발주시스템 성능 최적화 가이드. Google Sheets 접근·캐시·클라이언트 최적화.
+  대상: Apps Script + Google Sheets 기준. React+Node(로컬 Excel)는 데이터 레이어가 다름.
+-->
+
 # 성능 최적화 가이드
 
 ## 📊 현재 성능 이슈 분석

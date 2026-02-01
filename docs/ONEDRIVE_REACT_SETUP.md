@@ -1,3 +1,8 @@
+<!--
+  목적: 대안 구성 — Microsoft Graph API + OneDrive CSV 기반 부품발주시스템 설정 가이드.
+  참고: 현재 기본 구성은 로컬 Excel + Node 백엔드 → LOCAL_BACKEND_GITHUB_FRONTEND.md, SYSTEM_INFRASTRUCTURE.md 참고.
+-->
+
 # OneDrive + React 아키텍처 설정 가이드
 
 이 문서는 **구글 시트 없이** OneDrive + React로 구성된 부품발주시스템의 설치 및 운영 방법을 안내합니다.

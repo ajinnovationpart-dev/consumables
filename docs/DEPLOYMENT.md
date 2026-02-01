@@ -1,3 +1,9 @@
+<!--
+  목적: Google Apps Script 기반 부품발주 웹앱의 배포 가이드.
+        스프레드시트·Apps Script 설정, 웹앱 배포, 트리거, 테스트, 문제 해결.
+  대상: Apps Script 웹앱 배포 시. React+Node(로컬 Excel) 배포는 LOCAL_BACKEND_GITHUB_FRONTEND.md, CHECKLIST.md 참고.
+-->
+
 # 부품발주시스템 배포 가이드
 
 ## 📋 목차

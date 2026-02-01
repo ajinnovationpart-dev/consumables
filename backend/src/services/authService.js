@@ -1,3 +1,8 @@
+/**
+ * 인증 서비스: 비밀번호 해시·검증, 로그인(JWT 발급), 토큰 검증, 비밀번호 변경.
+ * - 사용자 데이터: localStorageService(Excel 사용자관리 시트).
+ * - JWT payload: userId, role, name, team, employeeCode, region.
+ */
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
@@ -21,7 +26,10 @@ export async function login(userId, password) {
   if (active !== 'Y') {
     return { success: false, message: '비활성화된 계정입니다.' };
   }
-  const storedHash = user['비밀번호해시'] ?? user.passwordHash;
+  const storedHash = (user['비밀번호해시'] ?? user.passwordHash ?? '').toString().trim();
+  if (!storedHash) {
+    return { success: false, message: '비밀번호가 등록되지 않았습니다. 관리자(기준정보 등록/관리)에서 비밀번호를 설정해 주세요.' };
+  }
   if (!verifyPassword(password, storedHash)) {
     return { success: false, message: '사용자 ID 또는 비밀번호가 올바르지 않습니다.' };
   }

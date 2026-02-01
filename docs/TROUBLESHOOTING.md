@@ -1,4 +1,12 @@
+<!--
+  목적: Apps Script / Google Sheets 기반 부품발주 웹앱 및 관련 환경에서 발생하는
+        접근 권한, 시트/데이터, 통계 페이지 로딩 문제 해결 가이드.
+  대상: Apps Script 웹앱 사용 시. React+Node(로컬 Excel) 구성은 SYSTEM_INFRASTRUCTURE.md, CHECKLIST.md 참고.
+-->
+
 # 문제 해결 가이드
+
+<!-- 목차: 접근 권한 → 기타 일반 오류 → 통계 페이지 데이터 로딩 → 디버깅 체크리스트 -->
 
 ## 접근 권한 오류 해결
 
@@ -166,6 +174,67 @@ admin@company.com | 관리자 | - | 본사 | 천안 | 관리자 | Y
 
 ---
 
+## 통계 페이지 데이터 로딩 문제 해결
+
+<!-- React+Node 구성의 통계 문제는 docs/CHECKLIST.md "프론트 데이터 로딩 점검" 참고. 아래는 Apps Script/Sheets 기준. -->
+
+### 증상
+
+```
+getAllRequests result: null
+No requests found
+```
+
+### 확인 사항
+
+#### 1. Apps Script 실행 로그 확인
+
+**방법:**
+1. Apps Script Editor 열기
+2. 왼쪽 메뉴에서 "실행" 클릭
+3. 최근 실행 로그 확인
+
+**찾아볼 로그:**
+- **정상**: `getAllRequests: START`, `getAllRequests: user = admin (관리자)`, `RequestModel.findAll: Sheet has 150 rows`, `getAllRequests: SUCCESS - Returning 149 requests`
+- **에러 1 (권한)**: `getAllRequests: ERROR - Not admin, role = 사용자` → 관리자 권한 없음
+- **에러 2 (시트 없음)**: `RequestModel.findAll: ERROR - Cannot read property 'getDataRange'` → '신청내역' 시트 없음/이름 다름
+- **에러 3 (데이터 없음)**: `RequestModel.findAll: No data rows found` → 시트에 헤더만 있고 데이터 없음
+
+#### 2. Google Sheets 데이터 확인
+
+1. Google Sheets 문서 열기
+2. '신청내역' 시트 선택
+3. 헤더 행(1행) 및 데이터 행(2행 이하) 존재 여부 확인
+
+#### 3. 시트 이름 확인
+
+`Config.gs`의 `SHEETS.REQUESTS` 값이 `'신청내역'`이고, 실제 시트 탭 이름과 일치해야 함. 공백/오타 없을 것.
+
+### 해결 방법
+
+1. **테스트 데이터 추가**: 신청 등록 페이지에서 테스트 신청 1~2건 등록 후 관리자 대시보드 → 통계 재조회
+2. **initialSetup 실행**: 시트가 없거나 구조가 잘못된 경우 Triggers.gs에서 `initialSetup()` 실행
+3. **관리자 권한 확인**: '사용자관리' 시트에서 현재 계정의 역할이 "관리자", 활성여부 "Y"인지 확인
+4. **상세 로그**: F12 콘솔에서 `getAllRequests result` 확인, Apps Script 실행 로그에서 `getAllRequests`/`RequestModel.findAll` 메시지 확인
+
+### 정상 작동 시 예상 로그 (참고)
+
+- **브라우저**: `getAllRequests result: 150 items`, `Filtered requests: 50 out of 150` 등
+- **Apps Script**: `getAllRequests: SUCCESS - Returning 150 requests`
+
+### 긴급 임시 조치
+
+데이터가 전혀 없을 때: Google Sheets '신청내역' 시트 2행에 샘플 행 수동 입력 후 통계 페이지 새로고침.
+
+### 통계 페이지 최종 체크리스트
+
+- [ ] '신청내역' 시트 존재
+- [ ] 시트에 헤더 행 및 데이터 행 1개 이상
+- [ ] 현재 계정이 '사용자관리'에 등록, 역할 "관리자", 활성 "Y"
+- [ ] Apps Script 최신 배포, 브라우저 캐시 삭제 (Ctrl+Shift+R)
+
+---
+
 ## 디버깅 체크리스트
 
 - [ ] 사용자 이메일이 사용자관리 시트에 등록되어 있음
@@ -176,8 +245,3 @@ admin@company.com | 관리자 | - | 본사 | 천안 | 관리자 | Y
 - [ ] 이메일 주소가 정확히 일치함
 - [ ] Apps Script 권한이 승인됨
 - [ ] 웹 앱이 올바르게 배포됨
-
-
-
-
-

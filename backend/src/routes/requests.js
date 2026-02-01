@@ -1,3 +1,12 @@
+/**
+ * 신청 라우트: /api/requests (전체 authMiddleware).
+ * - GET /my: 내 신청 목록.
+ * - GET /dashboard: 대시보드(기간·stats·recent).
+ * - GET /all: 관리자 전체 목록(쿼리 status).
+ * - GET /:requestNo: 상세.
+ * - POST /: 신청 생성.
+ * - PATCH /:requestNo/status: 상태 변경.
+ */
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.js';
 import * as requestService from '../services/requestService.js';
@@ -25,6 +34,20 @@ router.get('/dashboard', async (req, res) => {
     res.json(data);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/** 사용자용 알림 개수 (발주완료·수령 확인 대기 건) - 헤더 배지용 */
+router.get('/notification-count', async (req, res) => {
+  try {
+    if (req.user.role === config.roles.ADMIN) {
+      return res.json({ count: 0 });
+    }
+    const data = await requestService.getDashboardData(req.user, {});
+    const count = (data.notifications && data.notifications.length) || 0;
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ count: 0 });
   }
 });
 
@@ -67,8 +90,11 @@ router.post('/', async (req, res) => {
 
 router.patch('/:requestNo/status', async (req, res) => {
   try {
-    const { status, remarks } = req.body;
-    const result = await requestService.updateStatus(req.params.requestNo, status, remarks, req.user);
+    const { status, remarks, handler, expectedDeliveryDate } = req.body;
+    const result = await requestService.updateStatus(req.params.requestNo, status, remarks, req.user, {
+      handler,
+      expectedDeliveryDate,
+    });
     res.json(result);
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });

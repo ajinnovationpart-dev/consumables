@@ -77,7 +77,7 @@ async function generateRequestNo() {
   return prefix + String(seq).padStart(4, '0');
 }
 
-export async function updateStatus(requestNo, newStatus, remarks, user) {
+export async function updateStatus(requestNo, newStatus, remarks, user, options = {}) {
   const request = await storage.getRequestById(requestNo);
   if (!request) throw new Error('신청 건을 찾을 수 없습니다.');
 
@@ -86,7 +86,9 @@ export async function updateStatus(requestNo, newStatus, remarks, user) {
     lastModified: new Date().toISOString().slice(0, 19).replace('T', ' '),
     lastModifiedBy: user.userId,
   };
-  if (remarks) updates.handlerRemarks = remarks;
+  if (remarks !== undefined && remarks !== null) updates.handlerRemarks = String(remarks);
+  if (options.handler !== undefined) updates.handler = String(options.handler);
+  if (options.expectedDeliveryDate !== undefined) updates.expectedDeliveryDate = options.expectedDeliveryDate ? String(options.expectedDeliveryDate).trim() : '';
   if (newStatus === config.status.ORDERING) updates.orderDate = updates.lastModified;
   if (newStatus === config.status.FINISHED) updates.receiptDate = updates.lastModified;
 
@@ -172,6 +174,14 @@ export async function getDashboardData(user, options = {}) {
 
   const recent = filtered.slice(0, 10);
 
+  // 사용자용 알림: 발주완료(납기확인/납기미정) → 수령 확인 안내
+  const notifications = !isAdmin
+    ? filtered.filter(
+        (r) =>
+          r.status === config.status.COMPLETED_CONFIRMED || r.status === config.status.COMPLETED_PENDING
+      )
+    : [];
+
   // 긴급: 접수중 + 신청일이 1일 이상 지난 건
   const oneDayAgo = new Date();
   oneDayAgo.setDate(oneDayAgo.getDate() - 1);
@@ -202,5 +212,5 @@ export async function getDashboardData(user, options = {}) {
       return { ...r, delayDays };
     });
 
-  return { stats, recent, urgent, delayed, requests: filtered };
+  return { stats, recent, urgent, delayed, notifications, requests: filtered };
 }

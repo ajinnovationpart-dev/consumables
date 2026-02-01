@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { requests, formatDisplayDate } from '../services/api';
 
+const PAGE_SIZE = 10;
+
 function toDateOnly(str) {
   if (!str) return '';
   const s = String(str).trim();
@@ -32,6 +34,16 @@ function isInProgress(status) {
   return ['발주진행', '발주완료(납기확인)', '발주완료(납기미정)'].includes(status);
 }
 
+/** 키워드가 신청번호/품명/관리번호에 포함되는지 */
+function matchesKeyword(r, keyword) {
+  const k = String(keyword || '').trim().toLowerCase();
+  if (!k) return true;
+  const no = String(r.requestNo || '').toLowerCase();
+  const item = String(r.itemName || '').toLowerCase();
+  const asset = String(r.assetNo || '').toLowerCase();
+  return no.includes(k) || item.includes(k) || asset.includes(k);
+}
+
 export default function MyRequests() {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +51,10 @@ export default function MyRequests() {
   const [statusFilter, setStatusFilter] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [keyword, setKeyword] = useState('');
+  const [sortKey, setSortKey] = useState('requestDate');
+  const [sortAsc, setSortAsc] = useState(false);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     requests
@@ -50,6 +66,7 @@ export default function MyRequests() {
 
   const filtered = useMemo(() => {
     let result = [...list];
+    if (keyword) result = result.filter((r) => matchesKeyword(r, keyword));
     if (statusFilter === 'inProgress') {
       result = result.filter((r) => isInProgress(r.status));
     } else if (statusFilter) {
@@ -61,8 +78,30 @@ export default function MyRequests() {
     if (endDate) {
       result = result.filter((r) => toDateOnly(r.requestDate) <= endDate);
     }
+    result.sort((a, b) => {
+      let va = a[sortKey];
+      let vb = b[sortKey];
+      if (sortKey === 'requestDate') {
+        va = toDateOnly(va) || '';
+        vb = toDateOnly(vb) || '';
+      }
+      if (va === vb) return 0;
+      const cmp = va < vb ? -1 : 1;
+      return sortAsc ? cmp : -cmp;
+    });
     return result;
-  }, [list, statusFilter, startDate, endDate]);
+  }, [list, statusFilter, startDate, endDate, keyword, sortKey, sortAsc]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, page]);
+
+  const toggleSort = (key) => {
+    setSortKey(key);
+    setSortAsc((prev) => (sortKey === key ? !prev : true));
+  };
 
   const stats = useMemo(() => {
     const requested = filtered.filter((r) => r.status === '접수중').length;
@@ -90,12 +129,22 @@ export default function MyRequests() {
       <div className="card mb-4">
         <div className="card-body">
           <div className="row g-3 align-items-end">
+            <div className="col-md-3">
+              <label className="form-label">키워드 검색</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="신청번호, 품명, 관리번호"
+                value={keyword}
+                onChange={(e) => { setKeyword(e.target.value); setPage(1); }}
+              />
+            </div>
             <div className="col-md-2">
               <label className="form-label">상태</label>
               <select
                 className="form-select"
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
               >
                 {STATUS_OPTIONS.map((o) => (
                   <option key={o.value || 'all'} value={o.value}>{o.label}</option>
@@ -104,11 +153,11 @@ export default function MyRequests() {
             </div>
             <div className="col-md-2">
               <label className="form-label">시작일</label>
-              <input type="date" className="form-control" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <input type="date" className="form-control" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(1); }} />
             </div>
             <div className="col-md-2">
               <label className="form-label">종료일</label>
-              <input type="date" className="form-control" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              <input type="date" className="form-control" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(1); }} />
             </div>
           </div>
         </div>
@@ -150,37 +199,65 @@ export default function MyRequests() {
       </div>
 
       <div className="card">
-        {filtered.length ? (
-          <table className="table mb-0">
-            <thead>
-              <tr>
-                <th>신청번호</th>
-                <th>신청일</th>
-                <th>품명</th>
-                <th>수량</th>
-                <th>상태</th>
-                <th>담당자</th>
-                <th>액션</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((r) => (
-                <tr key={r.requestNo}>
-                  <td><Link to={`/request/${r.requestNo}`}>{r.requestNo ?? '-'}</Link></td>
-                  <td>{formatDisplayDate(r.requestDate)}</td>
-                  <td>{r.itemName ?? '-'}</td>
-                  <td>{r.quantity ?? '-'}</td>
-                  <td><span className={`badge ${getStatusBadgeClass(r.status)}`}>{r.status}</span></td>
-                  <td>{r.handler ?? '-'}</td>
-                  <td>
-                    {r.canCancel && <button type="button" className="btn btn-sm btn-danger" onClick={() => confirm('취소하시겠습니까?') && handleStatus(r.requestNo, '접수취소')}>취소</button>}
-                    {r.canConfirmReceipt && <button type="button" className="btn btn-sm btn-success" onClick={() => confirm('수령 확인하시겠습니까?') && handleStatus(r.requestNo, '처리완료')}>수령확인</button>}
-                    {!r.canCancel && !r.canConfirmReceipt && <Link to={`/request/${r.requestNo}`} className="btn btn-sm btn-outline-primary">상세</Link>}
-                  </td>
+        {paged.length ? (
+          <>
+            <table className="table mb-0">
+              <thead>
+                <tr>
+                  <th>신청번호</th>
+                  <th>
+                    <button type="button" className="btn btn-link p-0 text-decoration-none text-dark fw-normal" onClick={() => toggleSort('requestDate')}>
+                      신청일 {sortKey === 'requestDate' ? (sortAsc ? '↑' : '↓') : ''}
+                    </button>
+                  </th>
+                  <th>품명</th>
+                  <th>수량</th>
+                  <th>관리번호</th>
+                  <th>상태</th>
+                  <th>담당자</th>
+                  <th>액션</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {paged.map((r) => (
+                  <tr key={r.requestNo}>
+                    <td><Link to={`/request/${r.requestNo}`}>{r.requestNo ?? '-'}</Link></td>
+                    <td>{formatDisplayDate(r.requestDate)}</td>
+                    <td>{r.itemName ?? '-'}</td>
+                    <td>{r.quantity ?? '-'}</td>
+                    <td>{r.assetNo ?? '-'}</td>
+                    <td><span className={`badge ${getStatusBadgeClass(r.status)}`}>{r.status}</span></td>
+                    <td>{r.handler ?? '-'}</td>
+                    <td>
+                      {r.canCancel && <button type="button" className="btn btn-sm btn-danger" onClick={() => confirm('취소하시겠습니까?') && handleStatus(r.requestNo, '접수취소')}>취소</button>}
+                      {r.canConfirmReceipt && <button type="button" className="btn btn-sm btn-success" onClick={() => confirm('수령 확인하시겠습니까?') && handleStatus(r.requestNo, '처리완료')}>수령확인</button>}
+                      {!r.canCancel && !r.canConfirmReceipt && <Link to={`/request/${r.requestNo}`} className="btn btn-sm btn-outline-primary">상세</Link>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <span className="small text-muted">
+                전체 {filtered.length}건 중 {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)}건 (10건/페이지)
+              </span>
+              <nav>
+                <ul className="pagination pagination-sm mb-0">
+                  <li className={`page-item ${page <= 1 ? 'disabled' : ''}`}>
+                    <button type="button" className="page-link" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>이전</button>
+                  </li>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <li key={p} className={`page-item ${p === page ? 'active' : ''}`}>
+                      <button type="button" className="page-link" onClick={() => setPage(p)}>{p}</button>
+                    </li>
+                  ))}
+                  <li className={`page-item ${page >= totalPages ? 'disabled' : ''}`}>
+                    <button type="button" className="page-link" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>다음</button>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </>
         ) : (
           <div className="card-body">
             <p className="mb-0">조건에 맞는 신청 내역이 없습니다.</p>

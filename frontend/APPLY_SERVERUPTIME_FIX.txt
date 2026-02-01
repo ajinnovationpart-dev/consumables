@@ -1,0 +1,37 @@
+============================================
+  serverUptime is not defined 에러 수정 방법
+============================================
+
+에러: Dashboard.jsx:110 Uncaught ReferenceError: serverUptime is not defined
+
+원인: 실행 중인 앱이 "consumables" 폴더에서 뜨고, 그쪽 Dashboard.jsx 110번째 줄에서
+      serverUptime을 쓰지만 위쪽에 선언이 없음.
+
+--------------------------------------------
+  해결 (실행 중인 그 프로젝트에서만)
+--------------------------------------------
+
+1. npm run dev 를 실행한 폴더를 확인하세요.
+   (예: e:\consumables 또는 다른 경로의 consumables)
+
+2. 그 폴더에서 다음 파일을 엽니다:
+   src/pages/Dashboard.jsx
+
+3. "export default function Dashboard()" 또는 "function Dashboard()" 다음에
+   오는 중괄호 { 바로 아래, 다른 useState 들 위에 아래 한 줄을 넣습니다:
+
+   const [serverUptime, setServerUptime] = useState('—');
+
+4. 파일 맨 위에 다음이 있는지 확인합니다 (없으면 추가):
+   import { useState, useEffect } from 'react';
+
+5. 저장 후 브라우저에서 Ctrl+Shift+R (강력 새로고침)
+
+--------------------------------------------
+  이 저장소(ordering_consumables)에서 실행 시
+--------------------------------------------
+
+e:\ordering_consumables\frontend 에서 npm run dev 를 실행하면
+이쪽 Dashboard.jsx 에는 이미 serverUptime 이 정의되어 있어 에러가 나지 않습니다.
+
+============================================

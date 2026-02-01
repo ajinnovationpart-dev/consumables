@@ -1,3 +1,8 @@
+/**
+ * 백엔드 전역 설정.
+ * - .env 기반: LOCAL_ONEDRIVE_PATH, EXCEL_FILE, ATTACHMENTS_FOLDER, PORT, JWT_*, 상태/역할 상수.
+ * - getExcelPath(), getAttachmentsBasePath(), getAttachmentFolderForRequest() 제공.
+ */
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';

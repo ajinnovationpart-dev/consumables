@@ -1,3 +1,10 @@
+/**
+ * 관리자 전용 라우트: /api/admin (authMiddleware + adminOnly).
+ * - 사용자: GET/POST/PATCH /users, /users/:userId.
+ * - 배송지: GET/POST/PATCH /delivery-places, /delivery-places/:id.
+ * - CSV 가져오기: POST /import-csv.
+ * - 마스터 Excel 내보내기: GET /export-master.
+ */
 import { Router } from 'express';
 import { authMiddleware, adminOnly } from '../middleware/auth.js';
 import { hashPassword } from '../services/authService.js';

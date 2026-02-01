@@ -1,3 +1,9 @@
+/**
+ * 코드/마스터 라우트: /api/codes (authMiddleware).
+ * - GET /regions: 지역 목록.
+ * - GET /teams: 소속팀 목록.
+ * - GET /delivery-places?team=: 팀별 배송지(team 없으면 전체).
+ */
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.js';
 import * as storage from '../services/localStorageService.js';

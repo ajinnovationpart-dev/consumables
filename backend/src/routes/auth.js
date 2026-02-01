@@ -1,3 +1,9 @@
+/**
+ * 인증 라우트: POST /api/auth/login, GET /api/auth/me, POST /api/auth/change-password.
+ * - login: userId, password → JWT·user·redirectUrl.
+ * - me: authMiddleware 필요, req.user 반환.
+ * - change-password: authMiddleware, 본인만 변경 가능.
+ */
 import { Router } from 'express';
 import * as authService from '../services/authService.js';
 import { authMiddleware } from '../middleware/auth.js';

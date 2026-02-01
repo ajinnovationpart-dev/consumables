@@ -24,13 +24,29 @@ export default function Dashboard() {
 
   const stats = data?.stats ?? {};
   const recent = Array.isArray(data?.recent) ? data.recent.slice(0, 5) : [];
+  const notifications = Array.isArray(data?.notifications) ? data.notifications : [];
   const total = stats?.total ?? 0;
   const finished = stats?.finished ?? 0;
   const completionRate = total > 0 ? Math.round((finished / total) * 100) : 0;
 
   return (
     <>
-      <h1 style={{ marginBottom: 'var(--aj-spacing-lg)' }}>대시보드</h1>
+      <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h1 style={{ marginBottom: 0 }}>대시보드</h1>
+      </div>
+      {notifications.length > 0 && (
+        <div className="alert alert-info mb-3" role="alert">
+          <strong>📢 중요 알림</strong>
+          <p className="mb-1 mt-2">발주완료된 건이 있습니다. 수령 확인해 주세요.</p>
+          <ul className="mb-0 ps-3">
+            {notifications.slice(0, 5).map((n) => (
+              <li key={n.requestNo}>
+                <Link to={`/request/${n.requestNo}`}>신청번호 {n.requestNo}</Link> — {n.itemName ?? '-'}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="d-flex gap-2 flex-wrap mb-3" style={{ marginBottom: 'var(--aj-spacing-xl)' }}>
         <div className="card" style={{ flex: '1 1 120px' }}>
           <div style={{ fontSize: 'var(--aj-font-size-sm)', color: 'var(--aj-text-secondary)' }}>전체</div>

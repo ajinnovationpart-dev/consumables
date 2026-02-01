@@ -1,8 +1,15 @@
+/**
+ * 전역 인증 컨텍스트.
+ * - 토큰 유무로 /api/auth/me 호출해 user 복원. 토큰 없으면 loading만 해제.
+ * - login(): 로그인 성공 시 토큰 sessionStorage 저장, user 설정.
+ * - logout(): 토큰·user 제거.
+ */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { auth as authApi } from '../services/api';
 
 const AuthContext = createContext(null);
 
+/** 초기: 토큰 있으면 authApi.me()로 user 복원. value: { user, loading, login, logout } */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,6 +55,7 @@ export function AuthProvider({ children }) {
   );
 }
 
+/** AuthProvider 내부에서만 사용. 인증 상태·login·logout 접근 */
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');

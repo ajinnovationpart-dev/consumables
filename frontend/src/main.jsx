@@ -1,3 +1,8 @@
+/**
+ * React 앱 진입점.
+ * - BrowserRouter basename: 빌드 시 /consumables/ (GitHub Pages 서브경로).
+ * - AuthProvider로 전역 로그인 상태 제공.
+ */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';

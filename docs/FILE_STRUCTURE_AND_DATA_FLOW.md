@@ -1,3 +1,9 @@
+<!--
+  목적: 프로젝트 전체(Apps Script + HTML/JS/CSS)의 파일 구조와 데이터 흐름 문서.
+        서버/클라이언트 파일 역할, 파일 간 연관도, 기능별 데이터 흐름.
+  대상: Apps Script 웹앱 기준. React+Node 구조는 SYSTEM_INFRASTRUCTURE.md 참고.
+-->
+
 # 📁 파일 구조 및 데이터 흐름 문서
 
 ## 📋 목차

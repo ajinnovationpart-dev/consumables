@@ -105,10 +105,19 @@ export const requests = {
     const query = q.toString();
     return api(`/requests/dashboard${query ? `?${query}` : ''}`);
   },
+  notificationCount: () => api('/requests/notification-count'),
   get: (requestNo) => api(`/requests/${requestNo}`),
   create: (formData) => api('/requests', { method: 'POST', body: JSON.stringify(formData) }),
-  updateStatus: (requestNo, status, remarks) =>
-    api(`/requests/${requestNo}/status`, { method: 'PATCH', body: JSON.stringify({ status, remarks }) }),
+  updateStatus: (requestNo, status, remarks, options = {}) =>
+    api(`/requests/${requestNo}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        status,
+        remarks,
+        handler: options.handler !== undefined ? options.handler : undefined,
+        expectedDeliveryDate: options.expectedDeliveryDate !== undefined ? options.expectedDeliveryDate : undefined,
+      }),
+    }),
 };
 
 export const admin = {

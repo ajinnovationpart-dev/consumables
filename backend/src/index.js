@@ -1,3 +1,8 @@
+/**
+ * 백엔드 진입점 (Express).
+ * - 로컬 OneDrive 폴더 내 Excel(소모품발주.xlsx) + 첨부 파일 사용.
+ * - 라우트: /api/auth, /api/requests, /api/codes, /api/admin, /api/attachments, /api/debug/*
+ */
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -24,7 +29,9 @@ app.use(
     origin(origin, callback) {
       if (!origin) return callback(null, true); // same-origin or no Origin (e.g. Postman)
       if (allowedOrigins.some((o) => origin === o || origin.startsWith(o + '/'))) return callback(null, true);
-      return callback(null, true); // ngrok 등 다른 출처도 허용 (배포 시 필요하면 위 목록만 허용하도록 변경)
+      // 로컬 개발: localhost/127.0.0.1 모든 포트 허용 (5174 등)
+      if (origin && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) return callback(null, true);
+      return callback(null, true); // ngrok·GitHub Pages 등 다른 출처도 허용
     },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],

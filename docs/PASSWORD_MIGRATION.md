@@ -1,3 +1,8 @@
+<!--
+  목적: Google 계정 기반 → ID/PW 기반 로그인 전환 시 기존 사용자 비밀번호 설정 가이드.
+  대상: Apps Script 웹앱(Auth.gs 등) 기준. React+Node는 Excel 사용자관리 시트·authService 참고.
+-->
+
 # 비밀번호 마이그레이션 가이드
 
 ## 개요
