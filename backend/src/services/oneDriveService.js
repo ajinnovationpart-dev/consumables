@@ -95,6 +95,7 @@ export async function getRequests(filter = {}) {
   const keyMap = {
     신청번호: 'requestNo',
     신청일시: 'requestDate',
+    신청자ID: 'requesterEmail',
     신청자이메일: 'requesterEmail',
     신청자이름: 'requesterName',
     기사코드: 'employeeCode',
@@ -143,7 +144,7 @@ export async function getRequestById(requestNo) {
 export async function createRequest(data) {
   const { headers, rows } = await readCsv(FILES.REQUESTS);
   const headerOrder = [
-    '신청번호', '신청일시', '신청자이메일', '신청자이름', '기사코드', '소속팀', '지역',
+    '신청번호', '신청일시', '신청자ID', '신청자이름', '기사코드', '소속팀', '지역',
     '품명', '모델명', '시리얼번호', '수량', '관리번호', '수령지', '전화번호', '업체명',
     '비고', '사진URL', '상태', '접수담당자', '담당자비고', '발주일시', '예상납기일',
     '수령확인일시', '최종수정일시', '최종수정자',
@@ -151,7 +152,7 @@ export async function createRequest(data) {
   const h = headers.length ? headers : headerOrder;
   const revMap = {};
   Object.entries({
-    requestNo: '신청번호', requestDate: '신청일시', requesterEmail: '신청자이메일',
+    requestNo: '신청번호', requestDate: '신청일시', requesterEmail: '신청자ID',
     requesterName: '신청자이름', employeeCode: '기사코드', team: '소속팀', region: '지역',
     itemName: '품명', modelName: '모델명', serialNo: '시리얼번호', quantity: '수량',
     assetNo: '관리번호', deliveryPlace: '수령지', phone: '전화번호', company: '업체명',
@@ -175,7 +176,7 @@ export async function updateRequest(requestNo, updates) {
   if (idx === -1) return false;
   const { headers, rows } = await readCsv(FILES.REQUESTS);
   const revMap = {
-    requestNo: '신청번호', requestDate: '신청일시', requesterEmail: '신청자이메일',
+    requestNo: '신청번호', requestDate: '신청일시', requesterEmail: '신청자ID',
     requesterName: '신청자이름', employeeCode: '기사코드', team: '소속팀', region: '지역',
     itemName: '품명', modelName: '모델명', serialNo: '시리얼번호', quantity: '수량',
     assetNo: '관리번호', deliveryPlace: '수령지', phone: '전화번호', company: '업체명',

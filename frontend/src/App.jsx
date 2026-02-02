@@ -28,6 +28,13 @@ function PrivateRoute({ children, adminOnly }) {
   return children;
 }
 
+/** 로그인 후 루트(/) 접근 시 역할별 대시보드로 이동 */
+function HomeRedirect() {
+  const { user } = useAuth();
+  if (user?.role === '관리자') return <Navigate to="/admin" replace />;
+  return <Navigate to="/dashboard" replace />;
+}
+
 export default function App() {
   const navigate = useNavigate();
 
@@ -121,8 +128,8 @@ export default function App() {
           </PrivateRoute>
         }
       />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<PrivateRoute><HomeRedirect /></PrivateRoute>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

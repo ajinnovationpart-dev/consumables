@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { requests, codes } from '../services/api';
 
@@ -22,6 +22,7 @@ export default function NewRequest() {
   const [photoPreview, setPhotoPreview] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [duplicateRequestNo, setDuplicateRequestNo] = useState('');
   const [form, setForm] = useState({
     itemName: '',
     modelName: '',
@@ -114,6 +115,7 @@ export default function NewRequest() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setDuplicateRequestNo('');
     if (!form.itemName?.trim()) {
       setError('품명을 입력하세요.');
       return;
@@ -145,7 +147,8 @@ export default function NewRequest() {
         photoBase64,
       });
       if (result.isDuplicate) {
-        setError(`중복 접수: ${result.duplicateRequestNo}`);
+        setError(`중복 접수되었습니다. 기존 신청번호: ${result.duplicateRequestNo}`);
+        setDuplicateRequestNo(result.duplicateRequestNo ?? '');
         setLoading(false);
         return;
       }
@@ -166,7 +169,14 @@ export default function NewRequest() {
     <>
       <h1 style={{ marginBottom: 'var(--aj-spacing-lg)' }}>신규 신청</h1>
       <form onSubmit={handleSubmit}>
-        {error && <div className="alert alert-danger">{error}</div>}
+        {error && (
+          <div className="alert alert-warning d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <span>{error}</span>
+            {duplicateRequestNo && (
+              <Link to={`/request/${duplicateRequestNo}`} className="btn btn-sm btn-outline-primary">기존 신청 상세 보기</Link>
+            )}
+          </div>
+        )}
         <div className="card mb-3">
           <div className="card-header">신청자 정보</div>
           <div className="card-body">

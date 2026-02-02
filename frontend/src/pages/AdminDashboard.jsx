@@ -229,7 +229,10 @@ export default function AdminDashboard() {
                     <td><strong>{r.requestNo ?? '-'}</strong></td>
                     <td>{r.itemName ?? '-'}</td>
                     <td><span className="badge bg-warning">{r.status ?? '-'}</span></td>
-                    <td>{r.requesterName ?? '-'}</td>
+                    <td>
+                      <span>{r.requesterName ?? '-'}</span>
+                      {r.requesterEmail && <span className="text-muted small ms-1">(ID: {r.requesterEmail})</span>}
+                    </td>
                     <td>{formatDisplayDate(r.requestDate)}</td>
                     <td><Link to={`/request/${r.requestNo}`} className="btn btn-sm btn-primary">처리</Link></td>
                   </tr>
@@ -268,7 +271,10 @@ export default function AdminDashboard() {
                     <td><strong>{r.requestNo ?? '-'}</strong></td>
                     <td>{r.itemName ?? '-'}</td>
                     <td><span className="badge bg-danger">{r.delayDays ?? 0}일</span></td>
-                    <td>{r.requesterName ?? '-'}</td>
+                    <td>
+                      <span>{r.requesterName ?? '-'}</span>
+                      {r.requesterEmail && <span className="text-muted small ms-1">(ID: {r.requesterEmail})</span>}
+                    </td>
                     <td>{r.handler ?? '-'}</td>
                     <td><Link to={`/request/${r.requestNo}`} className="btn btn-sm btn-warning">상태 변경</Link></td>
                   </tr>
@@ -304,7 +310,10 @@ export default function AdminDashboard() {
               {(Array.isArray(recent) ? recent : []).map((r) => (
                 <tr key={r.requestNo ?? r.requestDate ?? Math.random()}>
                   <td>{r.requestNo ?? '-'}</td>
-                  <td>{r.requesterName ?? '-'}</td>
+                  <td>
+                    <span>{r.requesterName ?? '-'}</span>
+                    {r.requesterEmail && <span className="text-muted small ms-1">(ID: {r.requesterEmail})</span>}
+                  </td>
                   <td>{r.itemName ?? '-'}</td>
                   <td><span className="badge" style={{ background: 'var(--aj-gray-200)', color: 'var(--aj-gray-800)' }}>{r.status ?? '-'}</span></td>
                   <td>{formatDisplayDate(r.requestDate)}</td>

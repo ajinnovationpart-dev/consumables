@@ -45,7 +45,7 @@
 ### 1.5 신청 상세 (`/request/:requestNo`)
 | 워딩 | 데이터/기능 | 일치 |
 |------|-------------|------|
-| 기본 정보: 신청번호, 신청일시, **상태**, 신청자, **지역** | `requestNo`, `requestDate`, `status`, `requesterName`, `team`, `region` | ✅ |
+| 기본 정보: 신청번호, 신청일시, **상태**, 신청자, **신청자 ID(사번)**, **지역** | `requestNo`, `requestDate`, `status`, `requesterName`, `team`, `requesterEmail`(ID/사번), `region` | ✅ |
 | 부품 정보: 품명, 규격/모델명, 수량, 관리번호, 시리얼번호 | `itemName`, `modelName`, `quantity`, `assetNo`, `serialNo` | ✅ |
 | 수령 정보: **수령지**, 전화번호, 업체명, 비고 | `deliveryPlace`, `phone`, `company`, `remarks` | ✅ |
 | 관리자 액션: **상태**, 담당자 비고 | `adminStatus` → `status`, `adminRemarks` → `handlerRemarks` | ✅ |
@@ -78,11 +78,11 @@
 | 조회 조건: **상태** | `statusFilter` → `r.status` 필터 | ✅ |
 | 조회 조건: **지역** | `regionFilter` → `r.region` 필터 (신청 건의 지역) | ✅ |
 | 시작일/종료일 | `startDate`, `endDate` 필터 | ✅ |
-| 테이블: 신청자, **지역**, 품명, 수량, **상태** | `requesterName`, `region`, `itemName`, `quantity`, `status` | ✅ |
+| 테이블: 신청자(이름 + ID), **지역**, 품명, 수량, **상태** | `requesterName`, `requesterEmail`(ID/사번), `region`, `itemName`, `quantity`, `status` | ✅ |
 | 발주진행 버튼 | 상태 → `발주진행` (접수중일 때만). **담당자 비고 프롬프트에서 취소 시 상태 변경 없음** | ✅ (수정 반영) |
 | 발주완료 버튼 | 상태 → `발주완료(납기확인)` (발주진행일 때만) | ✅ |
 
-※ **지역** = 신청 건의 지역으로 필터/표시. **상태** = 주문(신청) 상태. 서로 다르게 사용됨.
+※ **지역** = 신청 건의 지역으로 필터/표시. **상태** = 주문(신청) 상태. **신청자 ID(사번)** = 저장값은 ID/사번이며, Excel 헤더·UI는 "신청자ID" / "ID(사번)"로 표기(이메일 아님).
 
 ### 2.3 신청 상세 (관리자) — `/request/:requestNo` 내 관리자 액션
 | 워딩 | 데이터/기능 | 일치 |

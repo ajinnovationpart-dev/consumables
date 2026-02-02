@@ -19,14 +19,14 @@ const SHEETS = {
 };
 
 const REQUEST_HEADERS_KO = [
-  '신청번호', '신청일시', '신청자이메일', '신청자이름', '기사코드', '소속팀', '지역',
+  '신청번호', '신청일시', '신청자ID', '신청자이름', '기사코드', '소속팀', '지역',
   '품명', '모델명', '시리얼번호', '수량', '관리번호', '수령지', '전화번호', '업체명',
   '비고', '사진URL', '상태', '접수담당자', '담당자비고', '발주일시', '예상납기일',
   '수령확인일시', '최종수정일시', '최종수정자',
 ];
 
 const KEY_TO_KO = {
-  requestNo: '신청번호', requestDate: '신청일시', requesterEmail: '신청자이메일',
+  requestNo: '신청번호', requestDate: '신청일시', requesterEmail: '신청자ID',
   requesterName: '신청자이름', employeeCode: '기사코드', team: '소속팀', region: '지역',
   itemName: '품명', modelName: '모델명', serialNo: '시리얼번호', quantity: '수량',
   assetNo: '관리번호', deliveryPlace: '수령지', phone: '전화번호', company: '업체명',
@@ -38,10 +38,11 @@ const KEY_TO_KO = {
 const KO_TO_KEY = {};
 Object.entries(KEY_TO_KO).forEach(([k, v]) => { KO_TO_KEY[v] = k; });
 
-/** Excel 실제 컬럼명이 코드와 다를 때 매핑 (기존 파일 호환) */
+/** Excel 실제 컬럼명이 코드와 다를 때 매핑 (기존 파일 호환, 실제 저장값은 ID/사번) */
 const HEADER_ALIASES = {
-  '신청자이머': '신청자이메일',
-  '신청자 아이디': '신청자이메일',
+  '신청자이메일': '신청자ID',
+  '신청자이머': '신청자ID',
+  '신청자 아이디': '신청자ID',
   '접수담당지': '접수담당자',
   '수령확인': '수령확인일시',
   '최종수정일': '최종수정일시',

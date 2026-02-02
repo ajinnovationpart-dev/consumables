@@ -151,7 +151,10 @@ export default function AdminRequests() {
                 <tr key={r.requestNo}>
                   <td><Link to={`/request/${r.requestNo}`}>{r.requestNo ?? '-'}</Link></td>
                   <td>{formatDisplayDate(r.requestDate)}</td>
-                  <td>{r.requesterName ?? '-'}</td>
+                  <td>
+                    <span>{r.requesterName ?? '-'}</span>
+                    {r.requesterEmail && <span className="text-muted small ms-1">(ID: {r.requesterEmail})</span>}
+                  </td>
                   <td>{r.region ?? '-'}</td>
                   <td>{r.itemName ?? '-'}</td>
                   <td>{r.quantity ?? '-'}</td>
