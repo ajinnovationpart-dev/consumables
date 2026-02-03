@@ -20,6 +20,9 @@ export const config = {
   port: process.env.PORT || 3030,
   nodeEnv: process.env.NODE_ENV || 'development',
 
+  // A 백엔드(다른 레포, 예: hr-sample) 주소. 있으면 /api/a → A로 프록시
+  aBackendUrl: process.env.A_BACKEND_URL || '',
+
   // 로컬 OneDrive 폴더 경로
   localPath: process.env.LOCAL_ONEDRIVE_PATH || defaultBasePath,
   // Excel 파일명 (같은 폴더 내)

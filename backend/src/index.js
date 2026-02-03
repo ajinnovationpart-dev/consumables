@@ -2,11 +2,13 @@
  * 백엔드 진입점 (Express).
  * - 로컬 OneDrive 폴더 내 Excel(소모품발주.xlsx) + 첨부 파일 사용.
  * - 라우트: /api/auth, /api/requests, /api/codes, /api/admin, /api/attachments, /api/debug/*
+ * - A_BACKEND_URL 설정 시: /api/a/* → A 백엔드(예: localhost:3000)로 프록시
  */
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import cors from 'cors';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 import { config, getExcelPath, getAttachmentsBasePath } from './config.js';
 import { ensureExcelExists } from './services/localStorageService.js';
 import authRoutes from './routes/auth.js';
@@ -39,6 +41,24 @@ app.use(
   })
 );
 app.use(express.json({ limit: '10mb' }));
+
+// A 백엔드(다른 레포, 3000) 프록시: /api/a/* → A
+if (config.aBackendUrl) {
+  app.use(
+    '/api/a',
+    createProxyMiddleware({
+      target: config.aBackendUrl,
+      changeOrigin: true,
+      pathRewrite: { '^/api/a': '/api' },
+      on: {
+        proxyReq(proxyReq) {
+          proxyReq.setHeader('ngrok-skip-browser-warning', '1');
+        },
+      },
+    })
+  );
+  console.log('A backend proxy: /api/a ->', config.aBackendUrl);
+}
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
