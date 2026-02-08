@@ -232,7 +232,7 @@ getSessionToken() // URL 파라미터 또는 sessionStorage에서 토큰 가져�
 | O (15) | 업체명 | String | 업체명 | ❌ | 문자열로 저장 |
 | P (16) | 비고 | String | 비고 | ❌ | 문자열로 저장 |
 | Q (17) | 사진URL | String | Google Drive URL | ❌ | 문자열로 저장 |
-| R (18) | 상태 | String | 접수중/접수완료/발주진행/발주지연/발주완료/처리완료/접수취소 | ✅ | 문자열로 저장 |
+| R (18) | 상태 | String | 접수중/접수완료/발주지연/발주완료/처리완료/접수취소 | ✅ | 문자열로 저장 |
 | S (19) | 접수담당자 | String | 담당자 이름 | ❌ | 문자열로 저장 |
 | T (20) | 담당자비고 | String | 담당자 비고 | ❌ | 문자열로 저장 |
 | U (21) | 발주일시 | Date | 발주 일시 | ❌ | `new Date()` 객체로 저장 |
@@ -298,7 +298,7 @@ const data = sheet.getDataRange().getValues();
 for (let i = 1; i < data.length; i++) {
   if (String(data[i][0]) === requestNo) {
     // 상태 변경 (R열 = 18번째 컬럼)
-    sheet.getRange(i + 1, 18).setValue('발주진행');
+    sheet.getRange(i + 1, 18).setValue('접수완료');
     // 발주일시 기록 (U열 = 21번째 컬럼)
     sheet.getRange(i + 1, 21).setValue(new Date());
     // 최종수정일시 (X열 = 24번째 컬럼)
@@ -843,7 +843,7 @@ RequestService.updateStatus(requestNo, newStatus, remarks, user) {
        - 접수중 → 접수취소 (본인 신청만)
        - 발주완료 → 처리완료 (수령 확인, 본인 신청만)
   4. 상태 변경 및 업데이트
-     - 발주진행/발주완료: orderDate 기록
+     - 접수완료/발주완료: orderDate 기록
      - 처리완료: receiptDate 기록
   5. 데이터 저장 (RequestModel.update)
   6. 로그 기록
@@ -1062,7 +1062,7 @@ getDelayedRequests(sessionToken: string): Array<{
 }>
 ```
 
-**조건**: 상태가 "발주진행" 또는 "발주지연"이고 발주일로부터 3일 이상 경과
+**조건**: 상태가 "접수완료" 또는 "발주지연"이고 발주일로부터 3일 이상 경과
 
 ---
 

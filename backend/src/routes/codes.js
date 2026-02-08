@@ -30,6 +30,16 @@ router.get('/teams', async (req, res) => {
   }
 });
 
+/** 발주 담당자 목록 (관리자 배정용 기준정보, 시트 없으면 기본: 유하형, 김응규, 박유민, 손현우) */
+router.get('/handlers', async (req, res) => {
+  try {
+    const list = await storage.getHandlers();
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.get('/delivery-places', async (req, res) => {
   try {
     const team = req.query.team || null;

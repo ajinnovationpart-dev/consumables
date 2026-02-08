@@ -97,7 +97,7 @@ export default function AdminRequests() {
             <select className="form-select form-select-sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">전체</option>
               <option value="접수중">접수중</option>
-              <option value="발주진행">발주진행</option>
+              <option value="접수완료">접수 완료</option>
               <option value="발주완료(납기확인)">발주완료(납기확인)</option>
               <option value="발주완료(납기미정)">발주완료(납기미정)</option>
               <option value="처리완료">처리완료</option>
@@ -161,8 +161,8 @@ export default function AdminRequests() {
                   <td><span className="badge" style={{ background: 'var(--aj-gray-200)', color: 'var(--aj-gray-800)' }}>{r.status}</span></td>
                   <td>
                     <Link to={`/request/${r.requestNo}`} className="btn btn-sm btn-outline-primary">상세</Link>
-                    {r.status === '접수중' && <button type="button" className="btn btn-sm btn-primary ms-1" onClick={() => handleStatus(r.requestNo, '발주진행')}>발주진행</button>}
-                    {r.status === '발주진행' && <button type="button" className="btn btn-sm btn-success ms-1" onClick={() => handleStatus(r.requestNo, '발주완료(납기확인)')}>발주완료</button>}
+                    {r.status === '접수중' && <button type="button" className="btn btn-sm btn-primary ms-1" onClick={() => handleStatus(r.requestNo, '접수완료')}>접수 완료</button>}
+                    {r.status === '접수완료' && <button type="button" className="btn btn-sm btn-success ms-1" onClick={() => handleStatus(r.requestNo, '발주완료(납기확인)')}>발주완료</button>}
                   </td>
                 </tr>
               ))}

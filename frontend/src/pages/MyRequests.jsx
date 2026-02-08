@@ -26,12 +26,12 @@ function getStatusBadgeClass(status) {
   if (status === '접수중') return 'bg-primary';
   if (status === '처리완료') return 'bg-success';
   if (status === '접수취소') return 'bg-secondary';
-  if (['발주진행', '발주완료(납기확인)', '발주완료(납기미정)'].includes(status)) return 'bg-warning text-dark';
+  if (['접수완료', '발주완료(납기확인)', '발주완료(납기미정)'].includes(status)) return 'bg-warning text-dark';
   return 'bg-light text-dark';
 }
 
 function isInProgress(status) {
-  return ['발주진행', '발주완료(납기확인)', '발주완료(납기미정)'].includes(status);
+  return ['접수완료', '발주완료(납기확인)', '발주완료(납기미정)'].includes(status);
 }
 
 /** 키워드가 신청번호/품명/관리번호에 포함되는지 */

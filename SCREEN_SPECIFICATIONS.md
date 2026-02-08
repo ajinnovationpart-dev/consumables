@@ -154,7 +154,7 @@
    - "처리" 버튼 클릭 시 상세 페이지로 이동
 
 4. **지연 건 모니터링**
-   - 상태가 "발주진행" 또는 "발주지연"이고 발주일로부터 3일 이상 경과
+   - 상태가 "접수완료" 또는 "발주지연"이고 발주일로부터 3일 이상 경과
    - 지연 일수 표시
    - "상태 변경" 버튼
 
@@ -303,7 +303,7 @@ interface Request {
   requestDate: Date; // 신청일시
   itemName: string; // 품명
   quantity: number; // 수량
-  status: '접수중' | '접수완료' | '발주진행' | '발주지연' | '발주완료' | '처리완료' | '접수취소';
+  status: '접수중' | '접수완료' | '발주지연' | '발주완료' | '처리완료' | '접수취소';
   handler?: string; // 담당자 이름
   orderDate?: Date; // 발주일시
   expectedDeliveryDate?: Date; // 예상납기일
@@ -381,7 +381,7 @@ interface AdminRequest extends Request {
 ### 🔧 주요 기능
 
 1. **필터링**
-   - 상태별: 전체, 접수중, 발주진행, 처리완료, 접수취소
+   - 상태별: 전체, 접수중, 접수완료, 처리완료, 접수취소
    - 지역별: 전체, 서울, 부산, 대구, ...
    - 날짜 범위: 시작일 ~ 종료일
    - 실시간 필터링
@@ -519,7 +519,7 @@ interface AdminRequest extends Request {
 
 2. **상태 진행바**
    ```
-   접수중 → 접수완료 → 발주진행 → 발주완료 → 처리완료
+   접수중 → 접수완료 → 발주완료 → 처리완료
    ```
    - 현재 상태까지 하이라이트
 
@@ -571,7 +571,7 @@ interface AdminRequest extends Request {
    ```typescript
    PATCH /api/admin/requests/:requestNo
    Body: {
-     status: '접수중' | '접수완료' | '발주진행' | '발주지연' | '발주완료' | '처리완료' | '접수취소';
+     status: '접수중' | '접수완료' | '발주지연' | '발주완료' | '처리완료' | '접수취소';
    }
    ```
 
@@ -726,7 +726,7 @@ interface Request {
   company?: string;
   remarks?: string;
   photoUrl?: string;
-  status: '접수중' | '접수완료' | '발주진행' | '발주지연' | '발주완료' | '처리완료' | '접수취소';
+  status: '접수중' | '접수완료' | '발주지연' | '발주완료' | '처리완료' | '접수취소';
   handlerId?: string;
   handler?: string; // 담당자 이름
   handlerRemarks?: string;

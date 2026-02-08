@@ -5,8 +5,8 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "start": "node --disable-warning=DEP0060 src/index.js",
+    "dev": "node --watch --disable-warning=DEP0060 src/index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

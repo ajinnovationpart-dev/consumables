@@ -84,7 +84,7 @@
 | RequestDetail | `requests.get`, `requests.updateStatus`, `admin.users.list` | 상세, 상태/담당자/예상납기일, 강제취소, 담당자 목록(관리자) |
 | MyInfo | `auth.me`, `auth.changePassword` | 프로필, 비밀번호 변경 |
 | AdminDashboard | `requests.dashboard`, `requests.all` (간접 없음) | 대시 데이터는 dashboard 만 사용 |
-| AdminRequests | `requests.all`, `codes.regions`, `requests.updateStatus` | 전체 목록, 지역 필터, 발주진행/발주완료 |
+| AdminRequests | `requests.all`, `codes.regions`, `requests.updateStatus` | 전체 목록, 지역 필터, 접수완료/발주완료 |
 | AdminMaster | `admin.users.*`, `admin.deliveryPlaces.*`, `admin.importCsv`, `admin.exportMaster` | 사용자/배송지 CRUD, CSV, Excel 내보내기 |
 | AdminStatistics | `requests.dashboard(range)`, `requests.all` | 기간별 통계, 전체 목록 필터 |
 

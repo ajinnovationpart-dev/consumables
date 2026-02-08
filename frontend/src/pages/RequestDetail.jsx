@@ -1,21 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { requests, admin, getAttachmentUrl, formatDisplayDate } from '../services/api';
+import { requests, admin, codes, getAttachmentUrl, formatDisplayDate } from '../services/api';
 
 const STATUS_OPTIONS = [
   '접수중',
-  '발주진행',
+  '접수완료',
   '발주완료(납기확인)',
   '발주완료(납기미정)',
   '처리완료',
   '접수취소',
 ];
 
-/** 진행바 단계: 접수중 → 발주진행 → 발주완료 → 처리완료 */
+/** 진행바 단계: 접수중 → 접수완료 → 발주완료 → 처리완료 */
 const PROGRESS_STEPS = [
   { key: '접수중', label: '접수' },
-  { key: '발주진행', label: '발주진행' },
+  { key: '접수완료', label: '접수 완료' },
   { key: '발주완료', label: '발주완료' },
   { key: '처리완료', label: '처리완료' },
 ];
@@ -23,7 +23,7 @@ const PROGRESS_STEPS = [
 function stepIndex(status) {
   if (!status || status === '접수취소') return -1;
   if (status === '접수중') return 0;
-  if (status === '발주진행') return 1;
+  if (status === '접수완료') return 1;
   if (status === '발주완료(납기확인)' || status === '발주완료(납기미정)') return 2;
   if (status === '처리완료') return 3;
   return 0;
@@ -79,7 +79,7 @@ export default function RequestDetail() {
 
   useEffect(() => {
     if (!isAdmin) return;
-    admin.users.list().then((res) => setHandlers(Array.isArray(res) ? res : [])).catch(() => setHandlers([]));
+    codes.handlers().then((res) => setHandlers(Array.isArray(res) ? res : [])).catch(() => setHandlers([]));
   }, [isAdmin]);
 
   const handleConfirmReceipt = async () => {
@@ -163,7 +163,7 @@ export default function RequestDetail() {
     <>
       <h1 style={{ marginBottom: 'var(--aj-spacing-lg)' }}>신청 상세</h1>
 
-      {/* 상태 진행바: 접수 → 발주진행 → 발주완료 → 처리완료 */}
+      {/* 상태 진행바: 접수 → 접수완료 → 발주완료 → 처리완료 */}
       {currentStep >= 0 && (
         <div className="card mb-3">
           <div className="card-body">
@@ -276,8 +276,8 @@ export default function RequestDetail() {
                   <label className="form-label">담당자 배정</label>
                   <select className="form-select" value={adminHandler} onChange={(e) => setAdminHandler(e.target.value)}>
                     <option value="">선택하세요</option>
-                    {handlers.map((u) => (
-                      <option key={u.userId} value={u.name || u.userId}>{u.name || u.userId}</option>
+                    {handlers.map((h) => (
+                      <option key={h.name} value={h.name}>{h.name}</option>
                     ))}
                   </select>
                 </div>

@@ -52,7 +52,7 @@
 | RequestDetail | 진행바, 이미지 복사, 수령 확인(사용자), 상태/담당자/예상납기일/강제취소(관리자) | GET /requests/:id, PATCH status, admin.users.list | 목록으로(navigate -1), 관리자 시 /admin/requests |
 | MyInfo | 기본 정보, 비밀번호 변경 | GET /auth/me, POST /auth/change-password | /dashboard |
 | AdminDashboard | 기간, 통계 카드, 긴급/지연 테이블, 최근 신청 | GET /requests/dashboard | /admin/requests, /request/:id, /admin/statistics, /admin/master |
-| AdminRequests | 상태·지역·날짜 필터, 발주진행/발주완료 버튼, 신청자(이름+ID) | GET /requests/all, codes.regions, PATCH status | /request/:id, /admin, /admin/statistics, /admin/master |
+| AdminRequests | 상태·지역·날짜 필터, 접수완료/발주완료 버튼, 신청자(이름+ID) | GET /requests/all, codes.regions, PATCH status | /request/:id, /admin, /admin/statistics, /admin/master |
 | AdminMaster | 사용자·배송지·CSV | GET/POST/PATCH /admin/users, delivery-places, import-csv, export-master | - |
 | AdminStatistics | 기간, 통계, 차트 | GET /requests/dashboard, /requests/all | - |
 | Unauthorized | 권한 없음 안내 | - | 다시 시도, 대시보드/로그인 |
@@ -63,7 +63,7 @@
 
 - **신청자 ID(사번)**: Excel 헤더·UI는 "신청자ID" / "ID(사번)". API 키는 `requesterEmail`(값은 ID/사번).
 - **지역**: 신청 건의 `region` vs **수령지**: `deliveryPlace`(배송지). 명칭 구분 유지.
-- **상태**: 접수중, 발주진행, 발주완료(납기확인/납기미정), 처리완료, 접수취소 — 모두 `status`와 일치.
+- **상태**: 접수중, 접수완료, 발주완료(납기확인/납기미정), 처리완료, 접수취소 — 모두 `status`와 일치.
 
 ---
 

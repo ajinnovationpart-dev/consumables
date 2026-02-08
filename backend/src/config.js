@@ -37,7 +37,7 @@ export const config = {
 
   status: {
     REQUESTED: '접수중',
-    ORDERING: '발주진행',
+    ORDERING: '접수완료',
     COMPLETED_CONFIRMED: '발주완료(납기확인)',
     COMPLETED_PENDING: '발주완료(납기미정)',
     FINISHED: '처리완료',

@@ -24,14 +24,33 @@ export function getAttachmentUrl(photoUrl) {
   return origin ? `${origin}${photoUrl}` : photoUrl;
 }
 
-/** API 응답 날짜 표시 (문자열 그대로, 숫자면 Excel 일련번호 → YYYY-MM-DD HH:mm) */
+/** API 응답 날짜 표시 (로컬 시간 기준 YYYY-MM-DD HH:mm:ss) */
 export function formatDisplayDate(val) {
   if (val == null || val === '') return '-';
   if (typeof val === 'number') {
     const d = new Date((val - 25569) * 86400 * 1000);
-    return Number.isNaN(d.getTime()) ? String(val) : d.toISOString().slice(0, 19).replace('T', ' ');
+    if (Number.isNaN(d.getTime())) return String(val);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const h = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    const s = String(d.getSeconds()).padStart(2, '0');
+    return `${y}-${m}-${day} ${h}:${min}:${s}`;
   }
-  return String(val);
+  const str = String(val).trim();
+  if (!str) return '-';
+  // 서버가 UTC로 저장한 'YYYY-MM-DD HH:mm:ss' 형태면 UTC로 파싱 후 로컬 시간으로 표시
+  const utcLike = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(str) && !/Z$/i.test(str.trim());
+  const d = new Date(utcLike ? str.replace(' ', 'T') + 'Z' : str);
+  if (Number.isNaN(d.getTime())) return str;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const h = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  const s = String(d.getSeconds()).padStart(2, '0');
+  return `${y}-${m}-${day} ${h}:${min}:${s}`;
 }
 
 function getToken() {
@@ -148,4 +167,5 @@ export const codes = {
   regions: () => api('/codes/regions'),
   teams: () => api('/codes/teams'),
   deliveryPlaces: (team) => api(team ? `/codes/delivery-places?team=${encodeURIComponent(team)}` : '/codes/delivery-places'),
+  handlers: () => api('/codes/handlers'),
 };

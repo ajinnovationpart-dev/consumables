@@ -26,10 +26,15 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
   'http://127.0.0.1:3000',
 ];
+const GITHUB_PAGES_ORIGIN = 'https://ajinnovationpart-dev.github.io';
 app.use(
   cors({
     origin(origin, callback) {
       if (!origin) return callback(null, true); // same-origin or no Origin (e.g. Postman)
+      if (origin === GITHUB_PAGES_ORIGIN || origin.startsWith(GITHUB_PAGES_ORIGIN + '/')) {
+        console.log(`✅ CORS allowed (GitHub Pages): ${origin}`);
+        return callback(null, true);
+      }
       if (allowedOrigins.some((o) => origin === o || origin.startsWith(o + '/'))) return callback(null, true);
       // 로컬 개발: localhost/127.0.0.1 모든 포트 허용 (5174 등)
       if (origin && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) return callback(null, true);
@@ -40,7 +45,25 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
   })
 );
-app.use(express.json({ limit: '10mb' }));
+
+// A 프록시는 body 파서보다 먼저 (본문이 스트림으로 A에 전달되도록)
+// A 프록시 경로: OPTIONS(프리플라이트)는 B에서 처리, CORS 헤더 명시 후 204 반환
+if (config.aBackendUrl) {
+  app.use('/api/a', (req, res, next) => {
+    if (req.method === 'OPTIONS') {
+      const origin = req.headers.origin;
+      if (origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, ngrok-skip-browser-warning, X-Requested-With');
+        res.setHeader('Access-Control-Max-Age', '86400');
+      }
+      return res.status(204).end();
+    }
+    next();
+  });
+}
 
 // A 백엔드(다른 레포, 3000) 프록시: /api/a/* → A
 if (config.aBackendUrl) {
@@ -49,16 +72,40 @@ if (config.aBackendUrl) {
     createProxyMiddleware({
       target: config.aBackendUrl,
       changeOrigin: true,
-      pathRewrite: { '^/api/a': '/api' },
+      // /api/a/auth/login → /api/auth/login. (middleware가 /api/a 이후 경로만 넘기면 /auth/login → /api/auth/login)
+      pathRewrite: (path) => {
+        const rewritten = path.replace(/^\/api\/a\/api/, '/api').replace(/^\/api\/a/, '/api');
+        return rewritten.startsWith('/api') ? rewritten : '/api' + rewritten;
+      },
       on: {
-        proxyReq(proxyReq) {
+        proxyReq(proxyReq, req) {
           proxyReq.setHeader('ngrok-skip-browser-warning', '1');
+          // B가 받은 경로(req.originalUrl) → A로 보내는 경로(proxyReq.path)
+          console.log(`[A Proxy] ${req.method} ${req.originalUrl} → A ${config.aBackendUrl}${proxyReq.path}`);
+        },
+        proxyRes(proxyRes, req, res) {
+          const origin = req.headers.origin;
+          if (origin) {
+            res.setHeader('Access-Control-Allow-Origin', origin);
+            res.setHeader('Access-Control-Allow-Credentials', 'true');
+          }
+          console.log(`[A Proxy] Response: ${proxyRes.statusCode} ${req.method} ${req.originalUrl}`);
+        },
+        error(err, req, res) {
+          console.error('[A Proxy] Error:', err.message, req.method, req.originalUrl);
+          if (!res.headersSent) {
+            res.writeHead(502, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, message: 'A Backend 연결 실패', error: err.message }));
+          }
         },
       },
     })
   );
-  console.log('A backend proxy: /api/a ->', config.aBackendUrl);
+  const aUrl = config.aBackendUrl.replace(/\/$/, '');
+  console.log(`✅ A Backend proxy enabled: /api/a → ${aUrl}/api`);
 }
+
+app.use(express.json({ limit: '10mb' }));
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
@@ -120,5 +167,6 @@ app.listen(config.port, async () => {
   } catch (e) {
     console.warn('Excel init:', e.message);
   }
+  console.log(`✅ CORS allowed (GitHub Pages): ${GITHUB_PAGES_ORIGIN}`);
   console.log(`API running at http://localhost:${config.port}`);
 });

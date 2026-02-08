@@ -192,7 +192,7 @@ export async function getDashboardData(user, options = {}) {
     return d < oneDayAgoStr;
   });
 
-  // 지연: 발주진행 + 발주일이 3일 이상 지난 건
+  // 지연: 접수완료 + 발주일이 3일 이상 지난 건
   const threeDaysAgo = new Date();
   threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
   const threeDaysAgoStr = threeDaysAgo.toISOString().slice(0, 10);

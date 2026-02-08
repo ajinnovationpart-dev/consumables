@@ -33,7 +33,7 @@ const CONFIG = {
   // 상태 코드 (축소된 상태값)
   STATUS: {
     REQUESTED: '접수중',
-    ORDERING: '발주진행',
+    ORDERING: '접수완료',
     COMPLETED_CONFIRMED: '발주완료(납기확인)',
     COMPLETED_PENDING: '발주완료(납기미정)',
     FINISHED: '처리완료',
@@ -1778,7 +1778,7 @@ class RequestService {
   _notifyUser(request, newStatus) {
     try {
       const statusMessages = {
-        [CONFIG.STATUS.ORDERING]: '발주가 진행 중입니다.',
+        [CONFIG.STATUS.ORDERING]: '접수 완료되었습니다.',
         [CONFIG.STATUS.COMPLETED_CONFIRMED]: '발주가 완료되었습니다. (납기확인) 수령 확인을 부탁드립니다.',
         [CONFIG.STATUS.COMPLETED_PENDING]: '발주가 완료되었습니다. (납기미정)',
         [CONFIG.STATUS.FINISHED]: '처리가 완료되었습니다.',
@@ -2478,7 +2478,7 @@ function getNotifications(sessionToken) {
         if (req.status === CONFIG.STATUS.ORDERING) {
           notification = {
             type: 'info',
-            title: '발주 진행',
+            title: '접수 완료',
             message: `[${req.requestNo}] ${req.itemName} 발주가 진행 중입니다.`,
             date: req.lastModifiedDate,
             requestNo: req.requestNo
@@ -2647,7 +2647,7 @@ function getDashboardStats(sessionToken) {
     
     todayRequests.forEach(req => {
       if (req.status === '접수중') stats.today.requested++;
-      else if (req.status === '발주진행') stats.today.inProgress++;
+      else if (req.status === '접수완료') stats.today.inProgress++;
       else if (req.status === '발주완료(납기확인)' || req.status === '발주완료(납기미정)') {
         stats.today.inProgress++;
         stats.today.completed++;
@@ -3205,7 +3205,7 @@ function getDashboardData(sessionToken) {
         if (req.status === CONFIG.STATUS.ORDERING) {
           notification = {
             type: 'info',
-            title: '발주 진행',
+            title: '접수 완료',
             message: `[${req.requestNo}] ${req.itemName} 발주가 진행 중입니다.`,
             date: req.lastModifiedDate,
             requestNo: req.requestNo

@@ -228,8 +228,8 @@ export default function NewRequest() {
               </label>
               <span className="text-muted small">또는</span>
               <label className="btn btn-outline-secondary mb-0">
-                파일 선택
-                <input type="file" accept="image/jpeg,image/jpg,image/png" className="d-none" onChange={handlePhotoChange} />
+                갤러리에서 선택
+                <input type="file" accept="image/*" className="d-none" onChange={handlePhotoChange} />
               </label>
             </div>
             {photoPreview && (

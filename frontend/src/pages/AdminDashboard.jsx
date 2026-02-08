@@ -160,10 +160,10 @@ export default function AdminDashboard() {
           </Link>
         </div>
         <div className="col-6 col-md-2">
-          <Link to={navigateToStatus('발주진행')} className="text-decoration-none">
-            <div className="card text-center border-info h-100" style={{ cursor: 'pointer' }} title="발주진행">
+          <Link to={navigateToStatus('접수완료')} className="text-decoration-none">
+            <div className="card text-center border-info h-100" style={{ cursor: 'pointer' }} title="접수 완료">
               <div className="card-body py-3">
-                <h6 className="text-muted mb-0">진행중</h6>
+                <h6 className="text-muted mb-0">접수 완료</h6>
                 <h2 className="text-info mb-0">{periodStats?.inProgress ?? 0}</h2>
               </div>
             </div>

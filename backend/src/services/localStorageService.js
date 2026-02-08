@@ -15,6 +15,7 @@ const SHEETS = {
   USERS: '사용자관리',
   CODES: '코드관리',
   DELIVERY_PLACES: '배송지관리',
+  HANDLERS: '발주담당자',
   LOGS: '로그',
 };
 
@@ -81,6 +82,7 @@ export async function ensureExcelExists() {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['사용자ID', '비밀번호해시', '이름', '기사코드', '소속팀', '지역', '역할', '활성화']]), SHEETS.USERS);
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['코드', '지역명', '사용여부', '정렬순서']]), SHEETS.CODES);
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['배송지명', '소속팀', '주소', '연락처', '담당자', '활성화', '비고']]), SHEETS.DELIVERY_PLACES);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['이름'], ['유하형'], ['김응규'], ['박유민'], ['손현우']]), SHEETS.HANDLERS);
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['일시', '레벨', '액션', '신청번호', '사용자', '상세내용']]), SHEETS.LOGS);
   XLSX.writeFile(wb, excelPath);
 }
@@ -107,6 +109,8 @@ export async function getRequests(filter = {}) {
         const key = KO_TO_KEY[ko] || ko;
         out[key] = dateKeys.includes(key) ? excelDateToStr(v) : v;
       });
+      // 구 명칭 '발주진행' → '접수완료' 정규화 (기존 Excel 호환)
+      if (out.status === '발주진행') out.status = config.status.ORDERING;
       return out;
     });
     if (filter.requesterEmail) list = list.filter((r) => String(r.requesterEmail || '').trim() === String(filter.requesterEmail || '').trim());
@@ -298,6 +302,32 @@ export async function getTeams() {
   } catch (err) {
     console.error('[getTeams] Excel 읽기 실패:', err.message);
     return [];
+  }
+}
+
+const DEFAULT_HANDLERS = ['유하형', '김응규', '박유민', '손현우'];
+
+export async function getHandlers() {
+  const excelPath = getExcelPath();
+  if (!fsSync.existsSync(excelPath)) return DEFAULT_HANDLERS.map((name) => ({ name }));
+  try {
+    const wb = XLSX.readFile(excelPath, { cellDates: false });
+    const sheet = getSheet(wb, SHEETS.HANDLERS);
+    if (!sheet) return DEFAULT_HANDLERS.map((name) => ({ name }));
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', header: 1 });
+    const names = [];
+    const header = rows[0] || [];
+    const nameCol = header.findIndex((h) => String(h).trim() === '이름');
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.every((c) => c === undefined || c === null || c === '')) continue;
+      const name = nameCol >= 0 ? String(row[nameCol] ?? '').trim() : String(row[0] ?? '').trim();
+      if (name && !names.includes(name)) names.push(name);
+    }
+    return names.length ? names.map((name) => ({ name })) : DEFAULT_HANDLERS.map((name) => ({ name }));
+  } catch (err) {
+    console.error('[getHandlers] Excel 읽기 실패:', err.message);
+    return DEFAULT_HANDLERS.map((name) => ({ name }));
   }
 }
 
@@ -541,11 +571,15 @@ export async function importFromCSV(csvContent, defaultPasswordHash = '') {
   };
 }
 
-/** 전체 시트를 담은 Excel 마스터 파일 버퍼 생성 */
+/** 전체 시트를 담은 Excel 마스터 파일 버퍼 생성 (발주담당자 시트 없으면 기본 추가) */
 export async function exportMasterExcel() {
   const excelPath = getExcelPath();
   if (!fsSync.existsSync(excelPath)) await ensureExcelExists();
   const wb = XLSX.readFile(excelPath, { cellDates: false });
+  if (!getSheet(wb, SHEETS.HANDLERS)) {
+    wb.Sheets[SHEETS.HANDLERS] = XLSX.utils.aoa_to_sheet([['이름'], ['유하형'], ['김응규'], ['박유민'], ['손현우']]);
+    if (wb.SheetNames) wb.SheetNames.push(SHEETS.HANDLERS);
+  }
   const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
   const fileName = `소모품발주_마스터_${new Date().toISOString().slice(0, 10)}.xlsx`;
   return { buffer, fileName };
