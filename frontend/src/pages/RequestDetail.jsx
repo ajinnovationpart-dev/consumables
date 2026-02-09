@@ -33,6 +33,9 @@ function canConfirmReceipt(status) {
   return status === '발주완료(납기확인)' || status === '발주완료(납기미정)';
 }
 
+/** API 실패 시 담당자 드롭다운에 쓸 기본 목록 */
+const DEFAULT_HANDLERS = [{ name: '유하형' }, { name: '김응규' }, { name: '박유민' }, { name: '손현우' }];
+
 export default function RequestDetail() {
   const { requestNo } = useParams();
   const navigate = useNavigate();
@@ -79,7 +82,13 @@ export default function RequestDetail() {
 
   useEffect(() => {
     if (!isAdmin) return;
-    codes.handlers().then((res) => setHandlers(Array.isArray(res) ? res : [])).catch(() => setHandlers([]));
+    codes
+      .handlers()
+      .then((res) => {
+        const list = Array.isArray(res) && res.length ? res : DEFAULT_HANDLERS;
+        setHandlers(list);
+      })
+      .catch(() => setHandlers(DEFAULT_HANDLERS));
   }, [isAdmin]);
 
   const handleConfirmReceipt = async () => {

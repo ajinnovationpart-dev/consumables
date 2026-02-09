@@ -308,12 +308,13 @@ export async function getTeams() {
 const DEFAULT_HANDLERS = ['유하형', '김응규', '박유민', '손현우'];
 
 export async function getHandlers() {
-  const excelPath = getExcelPath();
-  if (!fsSync.existsSync(excelPath)) return DEFAULT_HANDLERS.map((name) => ({ name }));
+  const defaultList = DEFAULT_HANDLERS.map((name) => ({ name }));
   try {
+    const excelPath = getExcelPath();
+    if (!fsSync.existsSync(excelPath)) return defaultList;
     const wb = XLSX.readFile(excelPath, { cellDates: false });
     const sheet = getSheet(wb, SHEETS.HANDLERS);
-    if (!sheet) return DEFAULT_HANDLERS.map((name) => ({ name }));
+    if (!sheet) return defaultList;
     const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', header: 1 });
     const names = [];
     const header = rows[0] || [];
@@ -324,10 +325,10 @@ export async function getHandlers() {
       const name = nameCol >= 0 ? String(row[nameCol] ?? '').trim() : String(row[0] ?? '').trim();
       if (name && !names.includes(name)) names.push(name);
     }
-    return names.length ? names.map((name) => ({ name })) : DEFAULT_HANDLERS.map((name) => ({ name }));
+    return names.length ? names.map((name) => ({ name })) : defaultList;
   } catch (err) {
     console.error('[getHandlers] Excel 읽기 실패:', err.message);
-    return DEFAULT_HANDLERS.map((name) => ({ name }));
+    return defaultList;
   }
 }
 

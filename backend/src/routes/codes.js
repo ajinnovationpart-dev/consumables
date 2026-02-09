@@ -30,13 +30,16 @@ router.get('/teams', async (req, res) => {
   }
 });
 
-/** 발주 담당자 목록 (관리자 배정용 기준정보, 시트 없으면 기본: 유하형, 김응규, 박유민, 손현우) */
+/** 발주 담당자 목록 (관리자 배정용). 실패 시에도 기본 목록 반환해 드롭다운이 비지 않도록 함 */
+const FALLBACK_HANDLERS = [{ name: '유하형' }, { name: '김응규' }, { name: '박유민' }, { name: '손현우' }];
 router.get('/handlers', async (req, res) => {
   try {
     const list = await storage.getHandlers();
-    res.json(list);
+    const arr = Array.isArray(list) && list.length ? list : FALLBACK_HANDLERS;
+    res.json(arr);
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[GET /codes/handlers]', err.message);
+    res.status(200).json(FALLBACK_HANDLERS);
   }
 });
 
