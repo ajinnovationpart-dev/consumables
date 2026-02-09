@@ -60,18 +60,6 @@ export default function AdminRequests() {
     return result;
   }, [list, statusFilter, regionFilter, startDate, endDate]);
 
-  const handleStatus = async (requestNo, status, remarks = '') => {
-    const needRemark = status !== '접수취소' && status !== '처리완료';
-    const rem = needRemark ? window.prompt('담당자 비고 (선택)') : '';
-    if (needRemark && rem === null) return;
-    try {
-      await requests.updateStatus(requestNo, status, rem ?? '');
-      setList((prev) => (Array.isArray(prev) ? prev : []).map((r) => (r.requestNo === requestNo ? { ...r, status } : r)));
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
   if (loading) return <p>로딩 중...</p>;
   if (error) return <div className="alert alert-danger">{error}</div>;
 
@@ -161,8 +149,6 @@ export default function AdminRequests() {
                   <td><span className="badge" style={{ background: 'var(--aj-gray-200)', color: 'var(--aj-gray-800)' }}>{r.status}</span></td>
                   <td>
                     <Link to={`/request/${r.requestNo}`} className="btn btn-sm btn-outline-primary">상세</Link>
-                    {r.status === '접수중' && <button type="button" className="btn btn-sm btn-primary ms-1" onClick={() => handleStatus(r.requestNo, '접수완료')}>접수 완료</button>}
-                    {r.status === '접수완료' && <button type="button" className="btn btn-sm btn-success ms-1" onClick={() => handleStatus(r.requestNo, '발주완료(납기확인)')}>발주완료</button>}
                   </td>
                 </tr>
               ))}

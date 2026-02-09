@@ -64,17 +64,18 @@ export async function createRequest(formData, user) {
   return { success: true, requestNo, message: '신청이 완료되었습니다.' };
 }
 
+/** 신청번호: YYMMDD + 4자리 순번. 오늘 건 중 실제 사용 중인 최대 순번+1 사용 (정렬 순서에 의존하지 않음) */
 async function generateRequestNo() {
-  const today = new Date().toISOString().slice(2, 10).replace(/-/g, '');
-  const prefix = today;
+  const prefix = new Date().toISOString().slice(2, 10).replace(/-/g, ''); // YYMMDD
   const list = await storage.getRequests({});
-  const todayList = list.filter((r) => String(r.requestNo).startsWith(prefix));
-  let seq = 1;
-  if (todayList.length > 0) {
-    const last = todayList[todayList.length - 1].requestNo;
-    seq = parseInt(String(last).slice(6), 10) + 1;
+  const todayList = list.filter((r) => String(r.requestNo || '').startsWith(prefix));
+  let maxSeq = 0;
+  for (const r of todayList) {
+    const seq = parseInt(String(r.requestNo || '').slice(6), 10);
+    if (!Number.isNaN(seq) && seq > maxSeq) maxSeq = seq;
   }
-  return prefix + String(seq).padStart(4, '0');
+  const nextSeq = maxSeq + 1;
+  return prefix + String(nextSeq).padStart(4, '0');
 }
 
 export async function updateStatus(requestNo, newStatus, remarks, user, options = {}) {
