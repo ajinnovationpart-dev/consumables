@@ -85,8 +85,7 @@ export default function RequestDetail() {
     codes
       .handlers()
       .then((res) => {
-        const list = Array.isArray(res) && res.length ? res : DEFAULT_HANDLERS;
-        setHandlers(list);
+        setHandlers(Array.isArray(res) ? res : []);
       })
       .catch(() => setHandlers(DEFAULT_HANDLERS));
   }, [isAdmin]);

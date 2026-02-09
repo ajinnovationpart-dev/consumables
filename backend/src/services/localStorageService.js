@@ -10,6 +10,8 @@ import path from 'path';
 import XLSX from 'xlsx';
 import { config, getExcelPath, getAttachmentFolderForRequest } from '../config.js';
 
+const ADMIN_ROLE = config.roles.ADMIN; // '관리자'
+
 const SHEETS = {
   REQUESTS: '신청내역',
   USERS: '사용자관리',
@@ -305,29 +307,25 @@ export async function getTeams() {
   }
 }
 
+/** 담당자 목록 조회 실패 시에만 사용 (에러 시 드롭다운 비지 않도록) */
 const DEFAULT_HANDLERS = ['유하형', '김응규', '박유민', '손현우'];
 
+/**
+ * 담당자 배정용 목록: 사용자관리 시트에서 역할이 '관리자'이고 활성화된 사용자만 반환.
+ */
 export async function getHandlers() {
   const defaultList = DEFAULT_HANDLERS.map((name) => ({ name }));
   try {
-    const excelPath = getExcelPath();
-    if (!fsSync.existsSync(excelPath)) return defaultList;
-    const wb = XLSX.readFile(excelPath, { cellDates: false });
-    const sheet = getSheet(wb, SHEETS.HANDLERS);
-    if (!sheet) return defaultList;
-    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '', header: 1 });
-    const names = [];
-    const header = rows[0] || [];
-    const nameCol = header.findIndex((h) => String(h).trim() === '이름');
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      if (!row || row.every((c) => c === undefined || c === null || c === '')) continue;
-      const name = nameCol >= 0 ? String(row[nameCol] ?? '').trim() : String(row[0] ?? '').trim();
-      if (name && !names.includes(name)) names.push(name);
-    }
-    return names.length ? names.map((name) => ({ name })) : defaultList;
+    const users = await getUsers();
+    const admins = users.filter((u) => {
+      const role = String(u['역할'] ?? u.role ?? '').trim();
+      const active = String(u['활성화'] ?? u.active ?? 'Y').trim().toUpperCase();
+      return role === ADMIN_ROLE && active !== 'N';
+    });
+    const names = [...new Set(admins.map((u) => String(u['이름'] ?? u.name ?? '').trim()).filter(Boolean))];
+    return names.map((name) => ({ name }));
   } catch (err) {
-    console.error('[getHandlers] Excel 읽기 실패:', err.message);
+    console.error('[getHandlers] 사용자관리 조회 실패:', err.message);
     return defaultList;
   }
 }
