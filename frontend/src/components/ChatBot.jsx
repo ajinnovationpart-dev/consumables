@@ -8,6 +8,9 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { chat } from '../services/api';
 
+/** 잠시 비활성화: true로 바꾸면 챗봇 아이콘 다시 표시 */
+const CHATBOT_ENABLED = false;
+
 const PANEL_WIDTH = 380;
 const PANEL_HEIGHT = 480;
 const BUTTON_SIZE = 56;
@@ -53,7 +56,7 @@ export default function ChatBot() {
   };
 
   const isAuthenticated = !!user;
-  if (!isAuthenticated) return null;
+  if (!CHATBOT_ENABLED || !isAuthenticated) return null;
 
   return (
     <>

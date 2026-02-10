@@ -18,77 +18,77 @@ function toDateStr(val) {
   return s;
 }
 
-/** 관리자용 컨텍스트: 신청 목록(최근 50), 사용자 요약, 담당자, 지역/팀, 배송지 요약 */
+/** 관리자용 컨텍스트: TPM 제한 대비 축소(최근 20건, 사용자 15명, 배송지 15건) */
 async function buildAdminContext() {
   const blocks = [];
 
   try {
     const list = await storage.getRequests({});
-    const recent = list.slice(0, 50);
+    const recent = list.slice(0, 20);
     const lines = recent.map(
       (r) =>
-        `신청번호 ${r.requestNo} | 신청일 ${toDateStr(r.requestDate)} | ${r.requesterName ?? '-'} | ${r.team ?? '-'} | ${r.region ?? '-'} | ${r.itemName ?? '-'} | 수량 ${r.quantity ?? '-'} | 상태 ${r.status ?? '-'} | 담당자 ${r.handler ?? '-'}`
+        `${r.requestNo} ${toDateStr(r.requestDate)} ${r.requesterName ?? '-'} ${r.team ?? '-'} ${r.itemName ?? '-'} ${r.quantity ?? '-'} ${r.status ?? '-'} ${r.handler ?? '-'}`
     );
-    blocks.push('=== 최근 신청 목록 (최대 50건) ===\n' + (lines.length ? lines.join('\n') : '(없음)'));
+    blocks.push('=== 최근 신청(20건) ===\n' + (lines.length ? lines.join('\n') : '(없음)'));
   } catch (e) {
-    blocks.push('=== 최근 신청 목록 ===\n(로드 실패)');
+    blocks.push('=== 최근 신청 ===\n(로드 실패)');
   }
 
   try {
     const users = await storage.getUsers();
-    const summary = users.map((u) => `ID: ${u['사용자ID'] ?? u.userId} | 이름: ${u['이름'] ?? u.name} | 팀: ${u['소속팀'] ?? u.team} | 지역: ${u['지역'] ?? u.region} | 역할: ${u['역할'] ?? u.role} | 활성화: ${u['활성화'] ?? u.active ?? 'Y'}`).join('\n');
-    blocks.push('=== 사용자 목록 ===\n' + (summary || '(없음)'));
+    const summary = users.slice(0, 15).map((u) => `${u['사용자ID'] ?? u.userId} ${u['이름'] ?? u.name} ${u['소속팀'] ?? u.team} ${u['역할'] ?? u.role}`).join('\n');
+    blocks.push('=== 사용자(15명) ===\n' + (summary || '(없음)'));
   } catch (e) {
-    blocks.push('=== 사용자 목록 ===\n(로드 실패)');
+    blocks.push('=== 사용자 ===\n(로드 실패)');
   }
 
   try {
     const handlers = await storage.getHandlers();
     const names = handlers.map((h) => h.name).filter(Boolean);
-    blocks.push('=== 담당자(관리자) 목록 ===\n' + (names.length ? names.join(', ') : '(없음)'));
+    blocks.push('=== 담당자 ===\n' + (names.length ? names.join(', ') : '(없음)'));
   } catch (e) {
-    blocks.push('=== 담당자 목록 ===\n(로드 실패)');
+    blocks.push('=== 담당자 ===\n(로드 실패)');
   }
 
   try {
     const regions = await storage.getRegions();
     const regionStr = regions.map((r) => r.name ?? r.code ?? '').filter(Boolean).join(', ');
-    blocks.push('=== 지역 목록 ===\n' + (regionStr || '(없음)'));
+    blocks.push('=== 지역 ===\n' + (regionStr || '(없음)'));
   } catch (e) {
-    blocks.push('=== 지역 목록 ===\n(로드 실패)');
+    blocks.push('=== 지역 ===\n(로드 실패)');
   }
 
   try {
     const teams = await storage.getTeams();
-    const teamStr = teams.map((t) => `${t.name ?? t.code ?? ''}`).filter(Boolean).join(', ');
-    blocks.push('=== 소속팀 목록 ===\n' + (teamStr || '(없음)'));
+    const teamStr = teams.slice(0, 20).map((t) => t.name ?? t.code ?? '').filter(Boolean).join(', ');
+    blocks.push('=== 소속팀 ===\n' + (teamStr || '(없음)'));
   } catch (e) {
-    blocks.push('=== 소속팀 목록 ===\n(로드 실패)');
+    blocks.push('=== 소속팀 ===\n(로드 실패)');
   }
 
   try {
     const places = await storage.getDeliveryPlacesAll();
-    const placeLines = (places || []).slice(0, 30).map((p) => `배송지: ${p['배송지명'] ?? p.name ?? '-'} | 팀: ${p['소속팀'] ?? p.team ?? '-'} | 주소: ${(p['주소'] ?? p.address ?? '').slice(0, 40)}`);
-    blocks.push('=== 배송지 목록 (상위 30건) ===\n' + (placeLines.length ? placeLines.join('\n') : '(없음)'));
+    const placeLines = (places || []).slice(0, 15).map((p) => `${p['배송지명'] ?? p.name ?? '-'} ${p['소속팀'] ?? p.team ?? '-'}`);
+    blocks.push('=== 배송지(15건) ===\n' + (placeLines.length ? placeLines.join('\n') : '(없음)'));
   } catch (e) {
-    blocks.push('=== 배송지 목록 ===\n(로드 실패)');
+    blocks.push('=== 배송지 ===\n(로드 실패)');
   }
 
   return blocks.join('\n\n');
 }
 
-/** 신청자용 컨텍스트: 본인 신청 목록만 */
+/** 신청자용 컨텍스트: 본인 신청만, 최근 25건으로 제한(토큰 절약) */
 async function buildUserContext(userId) {
   const blocks = [];
   try {
     const list = await storage.getRequests({ requesterEmail: userId });
-    const lines = list.map(
+    const lines = list.slice(0, 25).map(
       (r) =>
-        `신청번호 ${r.requestNo} | 신청일 ${toDateStr(r.requestDate)} | 품명 ${r.itemName ?? '-'} | 수량 ${r.quantity ?? '-'} | 상태 ${r.status ?? '-'} | 담당자 ${r.handler ?? '-'} | 예상납기 ${toDateStr(r.expectedDeliveryDate)}`
+        `${r.requestNo} ${toDateStr(r.requestDate)} ${r.itemName ?? '-'} ${r.quantity ?? '-'} ${r.status ?? '-'} ${r.handler ?? '-'}`
     );
-    blocks.push('=== 내 신청 목록 ===\n' + (lines.length ? lines.join('\n') : '(없음)'));
+    blocks.push('=== 내 신청 ===\n' + (lines.length ? lines.join('\n') : '(없음)'));
   } catch (e) {
-    blocks.push('=== 내 신청 목록 ===\n(로드 실패)');
+    blocks.push('=== 내 신청 ===\n(로드 실패)');
   }
   return blocks.join('\n\n');
 }
