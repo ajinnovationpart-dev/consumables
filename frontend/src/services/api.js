@@ -169,3 +169,8 @@ export const codes = {
   deliveryPlaces: (team) => api(team ? `/codes/delivery-places?team=${encodeURIComponent(team)}` : '/codes/delivery-places'),
   handlers: () => api('/codes/handlers'),
 };
+
+/** 챗봇: 역할에 따라 백엔드가 컨텍스트 구성 후 답변 반환 */
+export const chat = {
+  post: (message) => api('/chat', { method: 'POST', body: JSON.stringify({ message }) }),
+};

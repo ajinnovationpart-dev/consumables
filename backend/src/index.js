@@ -15,6 +15,7 @@ import authRoutes from './routes/auth.js';
 import requestRoutes from './routes/requests.js';
 import codeRoutes from './routes/codes.js';
 import adminRoutes from './routes/admin.js';
+import chatRoutes from './routes/chat.js';
 
 const app = express();
 
@@ -151,6 +152,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/codes', codeRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

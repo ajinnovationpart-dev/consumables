@@ -18,6 +18,7 @@ import AdminRequests from './pages/AdminRequests';
 import AdminMaster from './pages/AdminMaster';
 import AdminStatistics from './pages/AdminStatistics';
 import MyInfo from './pages/MyInfo';
+import ChatBot from './components/ChatBot';
 
 /** 로그인 필수 라우트. adminOnly면 역할이 '관리자'일 때만 children 렌더 */
 function PrivateRoute({ children, adminOnly }) {
@@ -53,6 +54,7 @@ export default function App() {
   }, [navigate]);
 
   return (
+    <>
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/unauthorized" element={<PrivateRoute><Layout><Unauthorized /></Layout></PrivateRoute>} />
@@ -131,5 +133,7 @@ export default function App() {
       <Route path="/" element={<PrivateRoute><HomeRedirect /></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    <ChatBot />
+    </>
   );
 }
