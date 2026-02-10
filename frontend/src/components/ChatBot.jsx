@@ -5,7 +5,6 @@
  * - 사용자: 내 신청 목록 기준으로 답변.
  */
 import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { chat } from '../services/api';
 
@@ -17,16 +16,12 @@ const RIGHT = 24;
 
 export default function ChatBot() {
   const { user } = useAuth();
-  const location = useLocation();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const panelRef = useRef(null);
   const listRef = useRef(null);
-
-  const isAuthenticated = !!user;
-  if (!isAuthenticated) return null;
 
   useEffect(() => {
     if (open && listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
@@ -56,6 +51,9 @@ export default function ChatBot() {
       handleSend();
     }
   };
+
+  const isAuthenticated = !!user;
+  if (!isAuthenticated) return null;
 
   return (
     <>

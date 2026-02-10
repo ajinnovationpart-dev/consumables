@@ -28,6 +28,7 @@ export function AuthProvider({ children }) {
       .catch(() => {
         sessionStorage.removeItem('token');
         localStorage.removeItem('token');
+        setUser(null);
       })
       .finally(() => setLoading(false));
   }, []);
